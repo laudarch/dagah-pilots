@@ -10,4 +10,4 @@ Instructions for getting the web interface to work:
 
 2.  run the following command, "python -m index.py" from the /web-interface directory.
     
-3.  Visit 127.0.0.1/index.html
+3.  Visit (your ip address):8080/index.html
