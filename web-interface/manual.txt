@@ -6,8 +6,8 @@ Instructions for getting the web interface to work:
     
     sudo pip install bottle
     
-2.  Edit index.py and change the line "run(host='192.168.203.128')" to match your ip address.
+2.  Edit /web-interface/index.py and change the line "run(host='192.168.203.128')" to match your ip address.
 
-2.  run the following command, "python -m index.py" from the directory which contains index.py.
+2.  run the following command, "python -m index.py" from the /web-interface directory.
     
 3.  Visit 127.0.0.1/index.html
