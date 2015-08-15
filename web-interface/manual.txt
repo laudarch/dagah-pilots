@@ -1,0 +1,7 @@
+Instructions for getting the web interface to work:
+
+1.  Make sure the bottle framwork for python is installed. installation instructions
+    can be found at http://bottlepy.org/docs/dev/tutorial.html#installation
+    
+2.  run the following command, "python -m index.py"
+    
