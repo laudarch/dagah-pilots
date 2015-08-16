@@ -136,6 +136,18 @@ def main(argv):
 	    autoagentphish(url,text,number,numberfile,page,appstore,backdoorapp,key,signing,jarsignalias,keypass,deliverymethod)
 
 def database_add_agents_1(number, path, key, number2, platform,deliverymethod):
+    if check_mysql() == 0:
+        os.system("service mysql start")
+    try:
+            db = DB(config=config)
+    except DBException as e:
+        if e[0] == 2:
+                   os.system("mysqladmin -u " + config.get("MYSQLUSER") + " create shevirah -p" + config.get("MYSQLPASS"))
+
+        else:
+                raise
+    db = DB(config=config)
+
     table = "agents"
     table2 = "agentsdata"
     _type = config.get("DATABASETYPE")
@@ -219,6 +231,16 @@ def autoagentphish(url,text,number,numberfile,page,appstore,backdoorapp,key,sign
     androidagent = config.get("ANDROIDAGENT")
     deletecontents(androidagent)
     iphoneagent = config.get("IPHONEAGENT")
+    if check_mysql() == 0:
+        os.system("service mysql start")
+    try:
+            db = DB(config=config)
+    except DBException as e:
+        if e[0] == 2:
+                   os.system("mysqladmin -u " + config.get("MYSQLUSER") + " create shevirah -p" + config.get("MYSQLPASS"))
+
+        else:
+                raise
     db = DB(config=config)
     db.query("create table if not exists agents (id SERIAL NOT NULL PRIMARY KEY, number varchar(12),path varchar(1000), controlkey varchar(7), controlnumber varchar(12), platform varchar(12), osversion varchar(10),deliverymethod varchar(10),active varchar(3))")
     db.query("create table if not exists agentsdata (id SERIAL NOT NULL PRIMARY KEY, sms varchar(2000),contacts varchar(1000), picture varchar(100), root varchar(50), ping varchar(2000), file varchar(100), packages varchar(10000), apk varchar(100), ipaddress varchar(16))")
