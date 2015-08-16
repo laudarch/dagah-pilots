@@ -1,9 +1,25 @@
 from bottle import route, run, template, static_file
 import subprocess
 
+@route('/images/<filename:re:.*\.png>')
+def send_image(filename):
+    return static_file(filename, root='./images', mimetype='image/png')
+
 @route('/index.js')
 def index_js():
     return static_file('index.js', root='./')
+
+@route('/jquery-ui.min.css')
+def jquery_css():
+    return static_file('jquery-ui.min.css', root='./')
+
+@route('/jquery.js')
+def jquery_css():
+    return static_file('jquery.js', root='./')
+
+@route('/jquery-ui.min.js')
+def jquery_css():
+    return static_file('jquery-ui.min.js', root='./')
 
 @route('/index.css')
 def index_js():

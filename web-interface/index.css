@@ -1,3 +1,8 @@
+.main_button {
+    width: 35px;
+    margin: 3px;
+}
+
 .parameter_group {
     border-radius: 25px;
     border: 2px solid #8AC007;
@@ -5,7 +10,41 @@
     width: fit-content
 }
 
-.parameter {
-    padding: 3px;
+ul.parameter_list {
+    list-style-type: none;
+}
+
+fieldset.parameter {
+    border-radius: 15px;
+    border: 2px solid #8AC007;
+    padding: 10px;
     width: fit-content
 }
+
+fieldset.radiogroup { 
+  border-radius: 25px;
+    border: 2px solid #8AC007;
+    padding: 10px;
+    width: fit-content
+} 
+
+fieldset.radiogroup legend { 
+  margin: 0; 
+  padding: 0; 
+  font-weight: bold; 
+  margin-left: 20px; 
+  font-size: 100%; 
+  color: black; 
+} 
+
+
+ul.radio  { 
+  margin: 0; 
+  padding: 0; 
+  margin-left: 20px; 
+  list-style: none; 
+} 
+
+ul.radio li { 
+  border: 1px transparent solid; 
+} 
