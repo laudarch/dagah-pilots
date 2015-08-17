@@ -60,6 +60,9 @@ while len(Matrix) > 0:
 				query2 = "SELECT id from agents where number=" + number
                 		db.query(query2)
                 		id = db.fetchone()[0]
+				table = "agents"
+                        	db.query("UPDATE "+table+" SET active='Y' WHERE id=" + "'"+ str(id) + "'")
+
                 		startcommand = "python agentpoll.py " + path + " " + key + " " + str(id) + " > log2";
 				pid = os.fork()
 				if pid == 0:

@@ -1,0 +1,16 @@
+#!/bin/sh
+wget http://dl.google.com/android/android-sdk_r24.2-linux.tgz
+tar -xvzf android-sdk_r24.2-linux.tgz
+export PATH=${PATH}:${PWD}/android-sdk-linux/tools:${PWD}/android-sdk-linux/platform-tools
+android update sdk --no-ui --filter platform-tools -a
+android update sdk --no-ui --filter tools
+android update sdk --no-ui --filter build-tools-19.1.0 -a
+android update sdk --no-ui --filter android-4 -a
+android update sdk --no-ui --filter addon-google_apis-google-4 -a
+android update sdk --no-ui --filter android-14 -a
+android update sdk --no-ui --filter addon-google_apis-google-14 -a
+wget https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.0.0.jar
+wget https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool
+chmod +x apktool
+mv apktool_2.0.0.jar apktool.jar
+
