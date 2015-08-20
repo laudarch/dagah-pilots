@@ -36,10 +36,31 @@ def ls():
     output = template('ls',process=p)
     return output
 
+
+@route('/show-databases.html')
+def dbtables_html():
+    output = template('show-databases-html')
+    return output
+
+@route('/list-tables-in-shevirah.html')
+def dbtables_html():
+    output = template('list-tables-in-shevirah-html')
+    return output
+
+@route('/list-rows-in-shevirah_agents.html')
+def dbtables_html():
+    output = template('list-rows-in-shevirah_agents-html')
+    return output
+
+@route('/list-rows-in-shevirah_agentsdata.html')
+def dbtables_html():
+    output = template('list-rows-in-shevirah_agentsdata-html')
+    return output
+
 @route('/ps')
 def ps():
     p = subprocess.Popen("ps -ef", stdout=subprocess.PIPE, shell=True)
     output = template('ls',process=p)
     return output
 
-run(host='192.168.203.128')
+run(host='192.168.203.129')
