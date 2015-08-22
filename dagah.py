@@ -1019,7 +1019,6 @@ def campaign_db(label,url,type):
 
 
 def database_add2(number, path, key, _type):
-    print("        database_add2():")
     if check_mysql() == 0:
         os.system("service mysql start")
     try:
