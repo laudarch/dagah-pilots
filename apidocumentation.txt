@@ -1,0 +1,37 @@
+Documentation for the PHP API:
+
+To set up the API:
+
+python dagah.py -API php -u apiurl -k KEYKEY1
+
+that creates the files for the api on the webserver and starts the apipoller program to check for input
+
+to ask the api to do things do a PUT command on apiurl/putfuncuploader.php. It speaks JSON. 
+
+for example (to attach a modem):
+
+POST /apiurl/putfuncuploader.php HTTP/1.0
+Host: 192.168.5.32
+User-Agent: Mozilla
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 210
+
+text={"apikey":"KEYKEY1","command":"modem","url":"modemurl","key":"KEYKEY1","number":"15555215554"}
+
+
+Other example commands:
+
+Basic Phish
+text={"apikey":"KEYKEY1","command":"phish","type":"basic","url":"mytest","label":mytest","numbers":["15555215556","15555215558"]}
+
+Harvester Phish
+text={"apikey":"KEYKEY1","command":"phish","type":"harvester","url":"mytest","label":"mytest","numbers":["15555215556","15555215558"],"clone":"www.gmail.com"}
+
+Autoagent Phish
+text={"apikey":"KEYKEY1","command":"phish","type":"autoagent","url":"mytest","label":"mytest","numbers": ["15555215556","15555215558"],"key":"KEYKEY1","app":"/root/Desktop/abcnews.apk"}
+
+Get Report
+text={"apikey":"KEYKEY1","command":"report"}
+Then GET the getfunc page where the results will be written
+GET /apiurl/getfunc HTTP/1.0
+
