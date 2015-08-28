@@ -68,7 +68,7 @@ while True:
                 backdoorapp = arsplit["app"]
 		appkey = arsplit["key"]
                 for x in numbersarray:
-			autoagentphish(url,text,x,None,None,None,backdoorapp,appkey,None,None,None,"sms")	
+			autoagentphish(url,text,x,None,None,None,backdoorapp,appkey,None,None,None,"http")	
 	 print "Endloop\n"
     sleep(1)
 print "broke\n"

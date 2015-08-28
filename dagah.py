@@ -154,7 +154,12 @@ def main(argv):
             harvesterphish(url,text,number,numberfile,campaignlabel,clone,page)
         if phishtype == "autoagent":
             autoagentphish(url,text,number,numberfile,page,appstore,backdoorapp,key,signing,jarsignalias,keypass,deliverymethod)
+        if phishtype == "autopwn":
+	    autopwnphish(url,text,number,numberfile,page)
 
+def autopwnphish(url,text,number,numberfile,page):
+	os.system("service postgresql start >/dev/null")
+	os.system("service metasploit start >/dev/null")
 
 def agentcommand(number,command,agentparameters,deliverymethod):
     if command == 1 or command == "SPAM":      
@@ -956,6 +961,8 @@ def stop_poller(poller):
 
 def make_api(path,key):
     make_apifiles(path)
+    if check_apache()== 0:
+    	os.system("service apache2 start>/dev/null")
     startcommand = "python apipoller.py " + path + " " + key + " > log"
     pid = os.fork()
     if pid == 0:
