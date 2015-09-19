@@ -43,6 +43,12 @@ def usage():
     print "\t-k <api key>"
     print "-Stop <poller> to shutdown (api, modem, agent,all)"
     print "-Report <reporting function> (get, drop)"
+    print "-Client <side attack> (name of attack to throw or list to see all attacks I know)"
+    print "\t-n/-N <number/file of numbers> to attack"
+    print "\t-p port for listener/shellcode"
+    print "\t-f file name for exploit"
+    print "\t-u url path for exploit"
+    print 
 def main(argv):
     if len(sys.argv) < 2:
         usage()
@@ -58,12 +64,14 @@ def main(argv):
     stop = False
     report = False
     agent = False
+    clientside = False
     key = "KEYKEY1"
     url = "/modemtest"
     page = "/index.html"
     clone = None
     campaignlabel = "blank"
-    number = None 
+    number = None
+    port = None 
     file = None
     agentlist = None
     numberfile = None
@@ -95,6 +103,9 @@ def main(argv):
     if argv[0] == '-Agent':
         agent = True
         agentparam = argv[1]
+    if argv[0] == '-Client':
+	clientside = True
+        whichclientside = argv[1]
     for opt, arg in opts:
         if opt == '-n':
             number = arg
@@ -106,6 +117,7 @@ def main(argv):
                  url = "/" + url
         if opt == '-p':
             page = arg
+	    port = arg
             agentparameters = arg
             if page[0] != '/':
                 page = "/" + page
@@ -132,6 +144,11 @@ def main(argv):
             signing = arg
         if opt == '-j':
             jarsignalias = arg
+    if clientside == True:
+	    if whichclientside == "list":
+		list_client_sides()
+	    else :
+		client_side_attack(whichclientside,number,numbersfile,url,file,port)
     if agent == True:
         if agentparam == "list":
             list_live_agents()
@@ -159,6 +176,18 @@ def main(argv):
             autoagentphish(url,text,number,numberfile,page,appstore,backdoorapp,key,signing,jarsignalias,keypass,deliverymethod)
         if phishtype == "autopwn":
 	    autopwnphish(url,text,number,numberfile,page)
+
+def list_client_sides():
+    print "\t1.) CVE-2010-1759"
+    print "\t2.) CVE-2013-4710"
+
+def client_side_attack(whichclientside,number,numbersfile,url,file,port):
+	 if port == None:
+                 port = config.get("SHELLPORT")
+	 if file == None:
+		file = config.get("CLIENTSIDEFILENAME")
+	 if url == None:
+		url = config.get("CLIENTSIDEPATH")	
 
 def autopwnphish(url,text,number,numberfile,page):
 	os.system("service postgresql start >/dev/null")
