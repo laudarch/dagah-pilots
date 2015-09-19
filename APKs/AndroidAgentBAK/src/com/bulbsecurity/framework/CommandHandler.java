@@ -119,9 +119,14 @@ public class CommandHandler extends Service {
 				intent5.putExtra("path", path);
 				intent5.putExtra("filename", file);
 				context3.startService(intent5);
+				//Intent intent9 = new Intent(getApplicationContext(), Download.class);
+                                //file = "/nse_main.lua";
+                                //intent9.putExtra("path", path);
+                                //intent9.putExtra("filename", file);
+                                //context3.startService(intent9);
 				Intent intent6 = new Intent(getApplicationContext(), Execute.class);
 				String filedir = getFilesDir().toString();
-				String command = "nmap ".concat(targets).concat(" -oA ").concat(filedir).concat("/nmapoutput"); 
+				String command = "nmap -sT ".concat(targets).concat(" -oA ").concat(filedir).concat("/nmapoutput"); 
 				String downloaded = "yes";
 				intent6.putExtra("command", command);
 				intent6.putExtra("downloaded", downloaded);

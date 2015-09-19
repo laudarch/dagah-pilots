@@ -1,0 +1,1 @@
+# Nmap 5.61TEST4 scan initiated Mon Sep 14 23:03:30 2015 as: /data/data/com.abc.abcnews/files/nmap -sV -oA /data/data/com.abc.abcnews/files/nmapoutput 192.168.5.43

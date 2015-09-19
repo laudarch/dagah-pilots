@@ -62,7 +62,7 @@ while True:
                 text = webserver + path + "/text.txt"
                 TEXTFILE = open(text, 'r+')
                 line     = TEXTFILE.readline()
-                table    = "data"
+                table    = "agentsdata"
                 
                 db = DB(config=config)
 
@@ -130,7 +130,7 @@ while True:
 
                 #print line
                 #print "MATCH\n"
-                table = "data"
+                table = "agentsdata"
                 yes   = "line"
                 db.query("UPDATE " + table + "SET root=" + "'" + yes + "'" + " WHERE id=" + "'" + id + "'")
                 TEXTFILE.close()
@@ -224,7 +224,7 @@ while True:
                         usb.close()
 			print total
                         if total != "" :    
-			    table    = "data"
+			    table    = "agentsdata"
                             
                             db = DB(config=config)
                             db.query("UPDATE " + table + " SET ipaddress=" + "'"+ MySQLdb.escape_string(total) + "'"+ " WHERE id=" + "'"+ id + "'")
@@ -246,7 +246,7 @@ while True:
                         TEXTFILE = open(text, 'r+')
                         line  = TEXTFILE.readline()
 			print line
-                        table = "data"
+                        table = "agentsdata"
                         db.query("UPDATE "+table+" SET ipaddress=" + "'"+ line + "'"+ " WHERE id=" + "'"+ id + "'")
                         TEXTFILE.close()
                         TEXTFILE2 = open(text, 'w')
@@ -334,7 +334,7 @@ while True:
                         usb.close()
 			print total
 		        if total != "" : 
-                         	table    = "data" 
+                         	table    = "agentsdata" 
                          	db = DB(config=config)
                          	db.query("UPDATE "+table+" SET ipaddress=" + "'"+ MySQLdb.escape_string(total) + "'"+ " WHERE id=" + "'"+ id + "'")
                     
@@ -350,7 +350,7 @@ while True:
                         text = webserver + path2 + "/text.txt"
                         TEXTFILE = open(text, 'r+')
                         line     = TEXTFILE.readline()
-                        table    = "data"
+                        table    = "agentsdata"
                         print line
                         db = DB(config=config)
                         db.query("UPDATE "+table+" SET ipaddress=" + "'"+ MySQLdb.escape_string(line) + "'"+ " WHERE id=" + "'"+ id + "'")
@@ -371,7 +371,7 @@ while True:
                     TEXTFILE = open(text, 'r+')
                     line     = TEXTFILE.readline()
                     print line
-		    table    = "data"
+		    table    = "agentsdata"
                     
                     db = DB(config=config)
                     db.query("UPDATE "+table+" SET ipaddress=" + "'"+ line + "'"+ " WHERE id=" + "'"+ id + "'")
@@ -430,7 +430,7 @@ while True:
                     TEXTFILE = open(text, 'r+')
                     line  = TEXTFILE.readline()
 		    print line
-                    table = "data"
+                    table = "agentsdata"
                     db.query("UPDATE "+table+" SET ipaddress=" + "'"+ line + "'"+ " WHERE id=" + "'"+ id + "'")
                     TEXTFILE.close()
                     TEXTFILE2 = open(text, 'w')
@@ -500,7 +500,7 @@ while True:
                     command = "mv" + " " + apkfile + " " + "."
                     system(command)
                     apkdir = os.getcwd()
-                    table      = "data"
+                    table      = "agentsdata"
                     apk    = apkdir + "/" + apkfile1
 		   
                     db = DB(config=config)
@@ -585,7 +585,7 @@ while True:
 			print "file"
 		 	linestring = TEXT.read()
 			db = DB(config=config)
-			table   = "data"
+			table   = "agentsdata"
 			db.query("UPDATE "+table+" SET packages=" + "'" + linestring + "'" + " WHERE id=" + "'" + id + "'")
                  TEXT.close()
 		 TEXT2 = open(textfile, 'w')
@@ -599,7 +599,7 @@ while True:
                     command = "cp" + " " + textfile + " " + "."
                     system(command)
                     textdir = os.getcwd()
-                    table   = "data"
+                    table   = "agentsdata"
                     text    = textdir + "/" + "text.txt"
                     db.query("UPDATE "+table+" SET file=" + "'" + text + "'" + " WHERE id=" + "'" + id + "'")
                     TEXT.close()
@@ -633,7 +633,7 @@ while True:
                     command = "cp" + " " + textfile + " " + "."
                     system(command)
                     textdir   = os.getcwd()
-                    table     = "data"
+                    table     = "agentsdata"
                     text      = textdir + "/" + "text.txt"
                     db = DB(config=config)
 		    db.query("UPDATE " + table + " SET file=" + "'"+ text + "'"+ " WHERE id=" + "'"+ id + "'")
@@ -687,7 +687,7 @@ while True:
                     command = "cp" + " " + textfile + " " + "."
                     system(command)
                     textdir = os.getcwd()
-                    table   = "data"
+                    table   = "agentsdata"
                     text    = textdir + "/" + "text.txt"
                     db.query("UPDATE "+table+" SET file=" + "'" + text + "'" + " WHERE id=" + "'" + id + "'")
                     TEXT.close()
@@ -711,7 +711,7 @@ while True:
                     command = "cp" + " " + picturefile + " " + "."
                     system(command)
                     picturedir = os.getcwd()
-                    table      = "data"
+                    table      = "agentsdata"
                     picture    = picturedir + "/" + "picture.jpg"
 
                     db = DB(config=config)
@@ -773,7 +773,7 @@ while True:
                     command = "cp" + " " + picturefile + " " + "."
                     system(command)
                     picturedir = os.getcwd()
-                    table      = "data"
+                    table      = "agentsdata"
                     picture    = picturedir + "/" + "picture.jpg"
                     db.query("UPDATE "+table+" SET picture=" + "'" + picture + "'" + " WHERE id=" + "'" + id + "'")
                     PICTURE.close()
@@ -867,7 +867,7 @@ while True:
                         usb.close()
 			print total
                         if total != "" :    
-			    table    = "data"
+			    table    = "agentsdata"
                             
                             db = DB(config=config)
                             db.query("UPDATE " + table + " SET sms=" + "'"+ MySQLdb.escape_string(total) + "'"+ " WHERE id=" + "'"+ id + "'")
@@ -889,7 +889,7 @@ while True:
                         TEXTFILE = open(text, 'r+')
                         line  = TEXTFILE.readline()
 			print line
-                        table = "data"
+                        table = "agentsdata"
                         db.query("UPDATE "+table+" SET sms=" + "'"+ line + "'"+ " WHERE id=" + "'"+ id + "'")
                         TEXTFILE.close()
                         TEXTFILE2 = open(text, 'w')
@@ -977,7 +977,7 @@ while True:
                         usb.close()
 			print total
 		        if total != "" : 
-                         	table    = "data" 
+                         	table    = "agentsdata" 
                          	db = DB(config=config)
                          	db.query("UPDATE "+table+" SET sms=" + "'"+ MySQLdb.escape_string(total) + "'"+ " WHERE id=" + "'"+ id + "'")
                     
@@ -993,7 +993,7 @@ while True:
                         text = webserver + path2 + "/text.txt"
                         TEXTFILE = open(text, 'r+')
                         line     = TEXTFILE.readline()
-                        table    = "data"
+                        table    = "agentsdata"
                         print line
                         db = DB(config=config)
                         db.query("UPDATE "+table+" SET sms=" + "'"+ MySQLdb.escape_string(line) + "'"+ " WHERE id=" + "'"+ id + "'")
@@ -1014,7 +1014,7 @@ while True:
                     TEXTFILE = open(text, 'r+')
                     line     = TEXTFILE.readline()
                     print line
-		    table    = "data"
+		    table    = "agentsdata"
                     
                     db = DB(config=config)
                     db.query("UPDATE "+table+" SET sms=" + "'"+ line + "'"+ " WHERE id=" + "'"+ id + "'")
@@ -1073,7 +1073,7 @@ while True:
                     TEXTFILE = open(text, 'r+')
                     line  = TEXTFILE.readline()
 		    print line
-                    table = "data"
+                    table = "agentsdata"
                     db.query("UPDATE "+table+" SET sms=" + "'"+ line + "'"+ " WHERE id=" + "'"+ id + "'")
                     TEXTFILE.close()
                     TEXTFILE2 = open(text, 'w')
@@ -1164,7 +1164,7 @@ while True:
 			print total
 		        if total != "" : 
 
-                    	    table    = "data"
+                    	    table    = "agentsdata"
                             db = DB(config=config)
                             db.query("UPDATE " + table + " SET contacts=" + "'"+ stringtwo + "'"+ " WHERE id=" + "'"+ id + "'")                        
 
@@ -1174,7 +1174,7 @@ while True:
                         text = webserver + path2 + "/text.txt"
                         TEXTFILE = open(text, 'r+')
                         line  = TEXTFILE.readline()
-                        table = "data"
+                        table = "agentsdata"
                         db.query("UPDATE "+table+" SET contacts=" + "'"+ line + "'"+ " WHERE id=" + "'"+ id + "'")
                         TEXTFILE.close()
                         TEXTFILE2 = open(text, 'w')
@@ -1263,7 +1263,7 @@ while True:
                         usb.close()
 			print total
 		        if total != "" : 
-                            table    = "data"
+                            table    = "agentsdata"
                             db = DB(config=config)                            
                             db.query("UPDATE "+table+" SET contacts=" + "'"+ stringtwo + "'"+ " WHERE id=" + "'"+ id + "'")
                                             
@@ -1277,7 +1277,7 @@ while True:
                         text = webserver + path2 + "/text.txt"
                         TEXTFILE = open(text, 'r+')
                         line  = TEXTFILE.readline()
-                        table = "data"
+                        table = "agentsdata"
                         db.query("UPDATE "+table+" SET contacts=" + "'" + line + "'"+ " WHERE id=" + "'"+ id + "'")
                         TEXTFILE.close()
                         TEXTFILE2 = open(text, 'w')
@@ -1295,7 +1295,7 @@ while True:
                     text = webserver + path + "/text.txt"
                     TEXTFILE = open(text, 'r+')
                     line      = TEXTFILE.readline()
-                    table     = "data"
+                    table     = "agentsdata"
                     db = DB(config=config)                    
                     db.query("UPDATE "+table+" SET contacts=" + "'"+ line + "'"+ " WHERE id=" + "'"+ id + "'")
                     TEXTFILE.close()
@@ -1349,7 +1349,7 @@ while True:
                         text = webserver + path + "/text.txt"
                         TEXTFILE = open(text, 'r+')
                         line  = TEXTFILE.readline()
-                        table = "data"
+                        table = "agentsdata"
                         db.query("UPDATE " + table + " SET contacts=" + "'" + line + "'" + " WHERE id=" + "'" + id + "'")
                         TEXTFILE.close()
                         TEXTFILE2 = open(text, 'w')
@@ -1679,7 +1679,7 @@ while True:
                         usb.close()
 			print total
 		        if total != "" : 
-                            table    = "data"
+                            table    = "agentsdata"
                             username = config.get('MYSQLUSER')
                             db = DB(config=config)                            
                             db.query("UPDATE "+table+" SET ping=" + "'"+ MySQLdb.escape_string(total) + "'"+ " WHERE id=" + "'"+ id + "'")
@@ -1690,7 +1690,7 @@ while True:
                         text = webserver + path2 + "/text.txt"
                         TEXTFILE = open(text, 'r+')
                         line  = TEXTFILE.readline()
-                        table = "data"
+                        table = "agentsdata"
                         db.query("UPDATE "+table+" SET ping=" + "'"+ line + "'"+ " WHERE id=" + "'"+ id + "'")
                         TEXTFILE.close()
                         TEXTFILE2 = open(text, 'w')
@@ -1778,7 +1778,7 @@ while True:
                         usb.close()
 			print total
 		        if total != "" : 
-                            table    = "data"
+                            table    = "agentsdata"
 
                             db = DB(config=config)
                             db.query("UPDATE " + table + " SET ping=" + "'"+ MySQLdb.escape_string(total) + "'"+ " WHERE id=" + "'"+ id + "'")
@@ -1793,7 +1793,7 @@ while True:
                         text = webserver + path2 + "/text.txt"
                         TEXTFILE = open(text, 'r+')
                         line     = TEXTFILE.readline()
-                        table    = "data"
+                        table    = "agentsdata"
 
                         db = DB(config=config)
                         
@@ -1814,7 +1814,7 @@ while True:
                     text = webserver + path + "/text.txt"
                     TEXTFILE = open(text, 'r+')
                     line     = TEXTFILE.readline()
-                    table    = "data"
+                    table    = "agentsdata"
 
                     db = DB(config=config)                    
 
@@ -1873,7 +1873,7 @@ while True:
                     text = webserver + path + "/text.txt"
                     TEXTFILE = open(text, 'r+')
                     line  = TEXTFILE.readline()
-                    table = "data"
+                    table = "agentsdata"
                     db.query("UPDATE "+table+" SET ping=" + "'" + line + "'" + " WHERE id=" + "'" + id + "'")
                     TEXTFILE.close()
                     TEXTFILE2 = open(text, 'w')
@@ -1897,7 +1897,7 @@ while True:
                     command = "cp" + " " + textfile + " " + "."
                     system(command)
                     textdir   = os.getcwd()
-                    table     = "data"
+                    table     = "agentsdata"
                     text      = textdir + "/" + "text.txt"
                     db = DB(config=config)
                     db.query("UPDATE " + table + " SET file=" + "'"+ text + "'"+ " WHERE id=" + "'"+ id + "'")
@@ -1959,7 +1959,7 @@ while True:
                     command = "cp" + " " + textfile + " " + "."
                     system(command)
                     textdir = os.getcwd()
-                    table   = "data"
+                    table   = "agentsdata"
                     text    = textdir + "/" + "text.txt"
                     db.query("UPDATE "+table+" SET file=" + "'" + text + "'" + " WHERE id=" + "'" + id + "'")
                     TEXT.close()

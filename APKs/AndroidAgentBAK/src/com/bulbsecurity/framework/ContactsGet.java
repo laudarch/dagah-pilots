@@ -6,7 +6,11 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.IBinder;
 import android.provider.Contacts.People;
-
+//import android.provider.ContactsContract;
+//import android.provider.ContactsContract.CommonDataKinds.Phone;
+//import android.provider.ContactsContract.CommonDataKinds.StructuredName;
+//import android.provider.ContactsContract.Data;
+//import android.provider.ContactsContract.RawContacts;
 public class ContactsGet extends Service {
 
 	@Override
@@ -21,10 +25,14 @@ public class ContactsGet extends Service {
 		String sms = "SMS";
 		String web = "WEB";
 		String allcontacts = "Contacts:";
+		//Cursor cur = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
 		Cursor cur = getContentResolver().query(People.CONTENT_URI, null, null, null, null);
 		if (cur.getCount() > 0) {
 		     while (cur.moveToNext()) {
 		    	 String thiscontact = null;
+			 //String name= cur.getString(cur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                         //String phoneNumber = cur.getString(cur.getColumnIndex(ContactsContract.CommonDataKinds.Phone._ID));
+			 //String id = cur.getString(cur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
 		         String id = cur.getString(cur.getColumnIndex(People._ID));
 		         String name = cur.getString(cur.getColumnIndex(People.DISPLAY_NAME));
 		         String number = cur.getString(cur.getColumnIndex(People.NUMBER));
