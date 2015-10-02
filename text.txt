@@ -1,1 +1,18 @@
-# Nmap 5.61TEST4 scan initiated Mon Sep 14 23:03:30 2015 as: /data/data/com.abc.abcnews/files/nmap -sV -oA /data/data/com.abc.abcnews/files/nmapoutput 192.168.5.43
+# Nmap 5.61TEST4 scan initiated Sun Sep 20 14:25:30 2015 as: /data/data/com.abc.abcnews/files/nmap -sT -oA /data/data/com.abc.abcnews/files/nmapoutput 10.37.12.20
+Nmap scan report for 10.37.12.20
+Host is up (0.0087s latency).
+Not shown: 989 closed ports
+PORT     STATE SERVICE
+21/tcp   open  ftp
+25/tcp   open  smtp
+80/tcp   open  http
+135/tcp  open  msrpc
+139/tcp  open  netbios-ssn
+443/tcp  open  https
+445/tcp  open  microsoft-ds
+513/tcp  open  login
+514/tcp  open  shell
+3306/tcp open  mysql
+3389/tcp open  ms-term-serv
+
+# Nmap done at Sun Sep 20 14:25:32 2015 -- 1 IP address (1 host up) scanned in 2.25 seconds

