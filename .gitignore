@@ -1,3 +1,7 @@
 android-sdk-linux/*
-*.py
+dagah.py
+apipoller.py
+agentpoll.py
+modempoller.py
+agentattachpoller.py
 FrameworkAndroidApp/*
