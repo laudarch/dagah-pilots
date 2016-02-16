@@ -1421,6 +1421,77 @@ while True:
                     sleep(1)
                     usb.close()
 
+        elif  arsplit[1] == "SHOW" :
+            print "SHOW"
+            modem          = arsplit[2]
+            deliverymethod = arsplit[3]
+            splitlength    = len(arsplit)
+            end            = splitlength - 1
+            if end > 3:
+            	sendmessage    = arsplit[4]
+            if  end > 4 :
+                for i in range(5, end+1):
+                    sendmessage += " "
+                    sendmessage += arsplit[i]
+            if end <= 3:
+               sendmessage == "blank"
+                
+	    if sendmessage == "blank":
+		command = key + " " + "SHOW blank"
+            else:
+                command = key + " " + "SHOW" + " "  + sendmessage
+            if  deliverymethod == "http" :
+                control = webserver + path + "/control"
+                CONTROLFILE = open(control, 'w')
+                CONTROLFILE.write(command)
+                CONTROLFILE.close()
+
+            if  deliverymethod == "sms" :
+                print "SMS"
+                db = DB(config=config)
+                db.query("SELECT path from modems where id=" + modem)
+                path2     = db.fetchone()[0]
+                db.query("SELECT type from modems where id=" + modem)
+                type2     = db.fetchone()[0]
+                db.query("SELECT controlkey from modems where id=" + modem)
+                key2      = db.fetchone()[0]
+                db.query("SELECT number from agents where id=" + id)
+                number2     = db.fetchone()[0]
+                type2 = type2.strip()
+
+                if  type2 == "app" :
+                    control = webserver + path2 + "/getfunc"
+                    print control
+                    command2 = key2 + " " + "SEND" + " " + number2 + " " + command
+                    CONTROLFILE = open(control, 'w')
+                    CONTROLFILE.write(command2)
+                    CONTROLFILE.close()
+
+                if  type2 == "usb" :
+                    usb = serial.Serial('/dev/ttyUSB1', 115200, timeout=2)
+                    usb.write("ATZ\r\n")
+                    sleep(1)
+                    line = usb.read(255)
+                    print line
+                    sleep(1)
+                    usb.write("AT+CMGF=1\r\n")
+                    line = usb.read(255)
+                    print line
+                    sleep(1)
+                    numberline = "AT+CMGS=\"" + number2 + "\"\r\n"
+                    usb.write(numberline)
+                    line = usb.read(255)
+                    print line
+                    sleep(1)
+                    usb.write( command + struct.pack('b', 26) )
+                    sleep(10)
+                    line = usb.read(255)
+                    print line
+                    sleep(1)
+                    usb.close()
+
+
+
         elif  arsplit[1] == "DOWN" :
             modem          = arsplit[2]
             path2          = arsplit[4]

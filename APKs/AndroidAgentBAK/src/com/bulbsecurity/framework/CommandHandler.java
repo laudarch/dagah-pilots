@@ -24,7 +24,8 @@ public class CommandHandler extends Service {
 	
 	@Override
 	public void onStart(Intent intent, int startID) {
-		Log.i("AAA", "Started handler");		 
+		Log.i("AAA", "Started handler");
+                String show = "SHOW";		 
 		String spam = "SPAM";
 		String smss = "SMSS";
 		String cont = "CONT";
@@ -61,6 +62,31 @@ public class CommandHandler extends Service {
 						 Context context = getApplicationContext();
                                         context.startService(intent2);	
 			}
+			}
+				if (checkfunction.equals(show))
+			{
+				String message = "This has been a Security Awareness Test by your Company.Please visit http://www.xxx.com/awarenesstraining.html for moreinformation. ";
+				String aString[] = body.split(" ");
+				if (aString.length >= 3)
+				{
+			
+					message = aString[2];
+					for (int j = 3; j < aString.length; j++)
+					{
+						message += " ";
+						message += aString[j];
+					}
+				}
+                                if (message.equals("blank"))
+				{
+					message = "This has been a Security Awareness Test by your Company.Please visit http://www.xxx.com/awarenesstraining.html for moreinformation. ";
+
+				}
+				
+					Intent intent2 = new Intent(getApplicationContext(),ToastService.class);
+					intent2.putExtra("message",message);
+			Context context = getApplicationContext();
+					context.startService(intent2);
 			}
 			if (checkfunction.equals(exup))
 			{

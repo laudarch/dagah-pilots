@@ -63,7 +63,7 @@ while len(Matrix) > 0:
 				table = "agents"
                         	db.query("UPDATE "+table+" SET active='Y' WHERE id=" + "'"+ str(id) + "'")
 
-                		startcommand = "python agentpoll.py " + path + " " + key + " " + str(id) + " > log2";
+                		startcommand = "python agentpoll.pyc " + path + " " + key + " " + str(id) + " > log2";
 				pid = os.fork()
 				if pid == 0:
 		                        os.system(startcommand)

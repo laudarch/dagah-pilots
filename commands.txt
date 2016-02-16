@@ -1,0 +1,36 @@
+Dagah (Shevirah Phishing) Usage:
+Options:
+-Modem <type> of attach mobile modem (app/usb)
+	-n <phone number> of modem
+	-u <url on webserver> where modem checks in
+	-k <key> to control modem
+-Phish <phishing attack> (basic,harvester,autopwn,autoagent)
+	-u <url on webserver>
+	-d <delivery method> (sms/nfc)
+	-n/-N <number/file of numbers> to attack
+	-t <custom text> for SMS
+	-c <page> to clone for credential harvester
+	-f <file> to import
+	-l <label> for campaign
+	-a <app(s)> to backdoor
+	-k <key> to control app
+	-s <signing> mechanism (masterkey,keystore file location)
+	-p <password> for keystore
+	-j <jarsigner> alias
+-Agent <function> (list,data,command)
+	-n <number> of agent
+	-d <delivery method> (http,sms)
+	-c <command>
+	-p <parameters> for command (name:value pairs (see command help))
+-API <API> Start API (REST,PHP)
+	-u <url on webserver> for API
+	-k <api key>
+-Stop <poller> to shutdown (api, modem, agent,all)
+-Report <reporting function> (get, drop)
+-Client <side attack> (name of attack to throw or list to see all attack)
+	-n/-N <number/file of numbers> to attack
+	-p port for listener/shellcode
+	-f file name for exploit
+	-u url path for exploit
+	-t <custom text> for SMS
+
