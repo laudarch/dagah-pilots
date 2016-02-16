@@ -1,1 +1,3 @@
 android-sdk-linux/*
+*.py
+FrameworkAndroidApp/*
